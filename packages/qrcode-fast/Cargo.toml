@@ -1,6 +1,6 @@
 [package]
 name = "qrcode-fast"
-version = "0.0.1-alpha"
+version = "0.1.3"
 authors = ["veaba <Godpu@outlook.com>"]
 description = "High-performance QR Code generator using WebAssembly"
 repository = "https://github.com/veaba/qrcodes"

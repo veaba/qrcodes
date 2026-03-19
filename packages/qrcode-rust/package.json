@@ -1,6 +1,6 @@
 {
   "name": "@veaba/qrcode-rust",
-  "version": "0.0.1-alpha",
+  "version": "0.1.3",
   "description": "Pure Rust QRCode generator - Rust crate only",
   "private": true,
   "files": [

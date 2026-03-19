@@ -1,5 +1,11 @@
 # @veaba/qrcode-bun
 
+## 0.1.3
+
+### Patch Changes
+
+- release: Keep all versions synchronized
+
 ## 0.1.1
 
 ### Patch Changes

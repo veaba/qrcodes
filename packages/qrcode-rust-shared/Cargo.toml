@@ -1,6 +1,6 @@
 [package]
 name = "qrcode-rust-shared"
-version = "0.0.2-alpha"
+version = "0.1.3"
 authors = ["veaba <Godpu@outlook.com>"]
 description = "Core QR Code library shared between qrcode-rust and qrcode-fast"
 repository = "https://github.com/veaba/qrcodes"

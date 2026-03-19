@@ -1,5 +1,11 @@
 # @veaba/qrcode-wasm
 
+## 0.1.3
+
+### Patch Changes
+
+- release: Keep all versions synchronized
+
 ## 0.1.2
 
 ### Patch Changes

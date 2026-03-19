@@ -1,6 +1,6 @@
 [package]
 name = "qrcode-rust"
-version = "0.0.1-alpha"
+version = "0.1.3"
 authors = ["veaba< Godpu@outlook.com>"]
 description = "Pure Rust QRCode generator"
 repository = "https://github.com/veaba/qrcodes"
