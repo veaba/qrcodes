@@ -11,7 +11,7 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-qrcode-rust-shared = { path = "../qrcode-rust-shared", version = "0.0.1-alpha" }
+qrcode-rust-shared = { path = "../qrcode-rust-shared", version = "0.0.2-alpha" }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
