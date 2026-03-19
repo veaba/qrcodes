@@ -1,6 +1,6 @@
 {
   "name": "@veaba/qrcode-js-shared",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared QRCode utilities and core logic for all @veaba/qrcode packages",
   "type": "module",
   "private": true,

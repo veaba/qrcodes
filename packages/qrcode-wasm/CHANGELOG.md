@@ -1,5 +1,11 @@
 # @veaba/qrcode-wasm
 
+## 0.1.2
+
+### Patch Changes
+
+- fix(qrcode-js): getTypeNumber + setupTypeNumber
+
 ## 0.1.1
 
 ### Patch Changes
