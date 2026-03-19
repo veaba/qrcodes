@@ -238,7 +238,7 @@ export function getTypeNumber(textLength: number, errorCorrectLevel: QRErrorCorr
   const levelMap: Record<number, number> = { 1: 0, 0: 1, 3: 2, 2: 3 };
   for (let typeNumber = 1; typeNumber <= 40; typeNumber++) {
     const limit = QRCodeLimitLength[typeNumber - 1][levelMap[errorCorrectLevel]];
-    if (limit >= textLength + 2) {
+    if (limit >= textLength) {
       return typeNumber;
     }
   }
@@ -323,14 +323,131 @@ export class QRCodeCore {
   }
 
   private make(): void {
+    const bestMaskPattern = this.getBestMaskPattern();
     this.setupPositionProbePattern(0, 0);
     this.setupPositionProbePattern(this.moduleCount - 7, 0);
     this.setupPositionProbePattern(0, this.moduleCount - 7);
     this.setupPositionAdjustPattern();
     this.setupTimingPattern();
-    this.setupTypeInfo();
+    this.setupTypeInfo(bestMaskPattern);
     if (this.typeNumber >= 7) this.setupTypeNumber();
-    this.mapData();
+    this.mapData(bestMaskPattern);
+  }
+
+  private getBestMaskPattern(): number {
+    let minLostPoint = Infinity;
+    let bestPattern = 0;
+    
+    const originalModules = new Uint8Array(this.modules);
+    
+    for (let pattern = 0; pattern < 8; pattern++) {
+      this.modules = new Uint8Array(originalModules);
+      this.setupPositionProbePattern(0, 0);
+      this.setupPositionProbePattern(this.moduleCount - 7, 0);
+      this.setupPositionProbePattern(0, this.moduleCount - 7);
+      this.setupPositionAdjustPattern();
+      this.setupTimingPattern();
+      this.setupTypeInfo(pattern);
+      if (this.typeNumber >= 7) this.setupTypeNumber();
+      this.mapData(pattern);
+      
+      const lostPoint = this.getLostPoint();
+      if (lostPoint < minLostPoint) {
+        minLostPoint = lostPoint;
+        bestPattern = pattern;
+      }
+    }
+    
+    this.modules = originalModules;
+    return bestPattern;
+  }
+
+  private getLostPoint(): number {
+    let lostPoint = 0;
+    const count = this.moduleCount;
+    
+    // Level 1: 同色相邻模块
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count; col++) {
+        let sameCount = 0;
+        const dark = this.isDark(row, col);
+        for (let r = -1; r <= 1; r++) {
+          if (row + r < 0 || count <= row + r) continue;
+          for (let c = -1; c <= 1; c++) {
+            if (col + c < 0 || count <= col + c) continue;
+            if (r === 0 && c === 0) continue;
+            if (this.isDark(row + r, col + c) === dark) sameCount++;
+          }
+        }
+        if (sameCount > 5) lostPoint += 3 + sameCount - 5;
+      }
+    }
+    
+    // Level 2: 2x2 同色块
+    for (let row = 0; row < count - 1; row++) {
+      for (let col = 0; col < count - 1; col++) {
+        const dark = this.isDark(row, col);
+        if (this.isDark(row + 1, col) === dark &&
+            this.isDark(row, col + 1) === dark &&
+            this.isDark(row + 1, col + 1) === dark) {
+          lostPoint += 3;
+        }
+      }
+    }
+    
+    // Level 3: 特定图案
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count - 6; col++) {
+        if (this.isDark(row, col) &&
+            !this.isDark(row, col + 1) &&
+            this.isDark(row, col + 2) &&
+            this.isDark(row, col + 3) &&
+            this.isDark(row, col + 4) &&
+            !this.isDark(row, col + 5) &&
+            this.isDark(row, col + 6)) {
+          lostPoint += 40;
+        }
+      }
+    }
+    for (let col = 0; col < count; col++) {
+      for (let row = 0; row < count - 6; row++) {
+        if (this.isDark(row, col) &&
+            !this.isDark(row + 1, col) &&
+            this.isDark(row + 2, col) &&
+            this.isDark(row + 3, col) &&
+            this.isDark(row + 4, col) &&
+            !this.isDark(row + 5, col) &&
+            this.isDark(row + 6, col)) {
+          lostPoint += 40;
+        }
+      }
+    }
+    
+    // Level 4: 黑色模块比例
+    let darkCount = 0;
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count; col++) {
+        if (this.isDark(row, col)) darkCount++;
+      }
+    }
+    const ratio = Math.abs(100 * darkCount / count / count - 50) / 5;
+    lostPoint += ratio * 10;
+    
+    return lostPoint;
+  }
+
+  private getMaskFunction(pattern: number): (row: number, col: number) => boolean {
+    switch (pattern) {
+      case 0: return (row, col) => (row + col) % 2 === 0;
+      case 1: return (row) => row % 2 === 0;
+      case 2: return (_, col) => col % 3 === 0;
+      case 3: return (row, col) => (row + col) % 3 === 0;
+      case 4: return (row, col) => (Math.floor(row / 2) + Math.floor(col / 3)) % 2 === 0;
+      case 5: return (row, col) => (row * col) % 2 + (row * col) % 3 === 0;
+      case 6: return (row, col) => ((row * col) % 2 + (row * col) % 3) % 2 === 0;
+      case 7: return (row, col) => ((row * col) % 3 + (row + col) % 2) % 2 === 0;
+      default: return (row, col) => (row + col) % 2 === 0;
+    }
   }
 
   private setupPositionProbePattern(row: number, col: number): void {
@@ -382,10 +499,9 @@ export class QRCodeCore {
     }
   }
 
-  private setupTypeInfo(): void {
+  private setupTypeInfo(maskPattern: number): void {
     const g15 = (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
     const g15Mask = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
-    const maskPattern = 0;
     let data = (this.correctLevel << 3) | maskPattern;
     let d = data << 10;
 
@@ -434,11 +550,27 @@ export class QRCodeCore {
   }
 
   private setupTypeNumber(): void {
-    // 简化版本
+    const G18 = (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    let d = this.typeNumber << 12;
+    
+    while (this.getBCHDigit(d) - this.getBCHDigit(G18) >= 0) {
+      d ^= G18 << (this.getBCHDigit(d) - this.getBCHDigit(G18));
+    }
+    
+    const bits = (this.typeNumber << 12) | d;
+    
+    for (let i = 0; i < 18; i++) {
+      const dark = ((bits >> i) & 1) === 1;
+      // 右下角区域
+      this.setDark(Math.floor(i / 3), this.moduleCount - 8 - 3 + (i % 3), dark);
+      // 左下角区域
+      this.setDark(this.moduleCount - 8 - 3 + (i % 3), Math.floor(i / 3), dark);
+    }
   }
 
-  private mapData(): void {
+  private mapData(maskPattern: number): void {
     const data = this.createData();
+    const maskFunc = this.getMaskFunction(maskPattern);
     let inc = -1;
     let row = this.moduleCount - 1;
     let bitIndex = 7;
@@ -453,7 +585,7 @@ export class QRCodeCore {
             if (byteIndex < data.length) {
               dark = ((data[byteIndex] >>> bitIndex) & 1) === 1;
             }
-            if ((row + col - c) % 2 === 0) dark = !dark;
+            if (maskFunc(row, col - c)) dark = !dark;
             this.setDark(row, col - c, dark);
             bitIndex--;
             if (bitIndex === -1) {
