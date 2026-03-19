@@ -1,0 +1,26 @@
+{
+  "name": "@veaba/qrcode-rust-shared",
+  "version": "0.0.2-alpha",
+  "description": "Core QR Code library shared between qrcode-rust and qrcode-fast",
+  "private": true,
+  "files": [
+    "src",
+    "Cargo.toml",
+    "Cargo.lock"
+  ],
+  "scripts": {
+    "build": "cargo build --release",
+    "test": "cargo test"
+  },
+  "keywords": [
+    "qrcode",
+    "rust",
+    "shared"
+  ],
+  "author": "veaba",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/veaba/qrcodes"
+  }
+}

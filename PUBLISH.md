@@ -156,6 +156,8 @@ ls packages/qrcode-wasm/pkg/
 
 ## 版本管理
 
+项目使用 [Changesets](./CHANGESETS.md) 统一管理所有包的版本，包括 npm 包和 Rust crate。
+
 ### 语义化版本规范
 
 | 版本类型 | 说明 | 示例 |
@@ -164,32 +166,40 @@ ls packages/qrcode-wasm/pkg/
 | minor | 新功能，向后兼容 | 1.0.0 → 1.1.0 |
 | patch | bug 修复 | 1.0.0 → 1.0.1 |
 
-### 版本更新命令
+### 版本同步
+
+项目通过 `scripts/sync-cargo-version.js` 实现自动同步：
+
+| npm 包 | Rust crate |
+|--------|------------|
+| `@veaba/qrcode-rust-shared` | `qrcode-rust-shared` |
+| `@veaba/qrcode-rust` | `qrcode-rust` |
+| `@veaba/qrcode-fast` | `qrcode-fast` |
+
+### 版本更新流程
 
 ```bash
-# 更新 patch 版本
-pnpm version patch
+# 1. 添加变更集
+pnpm changeset:add
 
-# 更新 minor 版本
-pnpm version minor
+# 2. 升级版本（自动同步 Cargo.toml）
+pnpm ci:version
 
-# 更新 major 版本
-pnpm version major
+# 3. 发布 npm 包
+pnpm ci:publish
 
-# 指定版本
-pnpm version 1.2.3
+# 4. 发布 Rust crate（按依赖顺序）
+cd packages/qrcode-rust-shared && cargo publish
+cd packages/qrcode-rust && cargo publish
+cd packages/qrcode-fast && cargo publish
 ```
 
-### 批量更新版本
+### 手动同步版本
+
+如需手动同步版本到 Cargo.toml：
 
 ```bash
-# 更新所有包的版本（推荐保持版本一致）
-cd packages/qrcode-js-shared && pnpm version 1.0.1
-cd packages/qrcode-wasm && pnpm version 1.0.1
-cd packages/qrcode-node && pnpm version 1.0.1
-cd packages/qrcode-bun && pnpm version 1.0.1
-cd packages/qrcode-js && pnpm version 1.0.1
-cd packages/qrcode-rust && pnpm version 1.0.1
+pnpm run version:sync
 ```
 
 ---
@@ -265,32 +275,33 @@ npm pack --dry-run
 npm publish --access public
 ```
 
-#### 6. 发布 qrcode-rust (Rust Crate)
+#### 6. 发布 Rust Crate
 
-`qrcode-rust` 是 Rust 原生包，发布到 **crates.io** 而不是 npm：
+Rust crate 发布到 **crates.io**，版本通过 changeset 统一管理：
 
 ```bash
-cd packages/qrcode-rust
-
 # 登录 crates.io（首次需要）
 cargo login
 
-# 验证包
-cargo package --list
-cargo package --allow-dirty
-
-# 发布到 crates.io
+# 按依赖顺序发布
+# 1. 发布 qrcode-rust-shared（基础依赖）
+cd packages/qrcode-rust-shared
 cargo publish
 
-# 或者使用 --dry-run 先测试
-cargo publish --dry-run
+# 2. 发布 qrcode-rust
+cd ../qrcode-rust
+cargo publish
+
+# 3. 发布 qrcode-fast
+cd ../qrcode-fast
+cargo publish
 ```
 
 **注意**:
 
-- 确保 `Cargo.toml` 中的 `version` 已更新
-- crates.io 上的包名是 `qrcode-rust`（不带 @veaba 前缀）
-- 发布后可在 <https://crates.io/crates/qrcode-rust> 查看
+- 版本已通过 `pnpm ci:version` 自动同步到 `Cargo.toml`
+- crates.io 上的包名不带 `@veaba` 前缀
+- 发布顺序必须遵循依赖关系：`qrcode-rust-shared` → `qrcode-rust` / `qrcode-fast`
 
 ### 方式二：使用脚本批量发包
 
@@ -386,7 +397,9 @@ node scripts/publish.js
 - <https://www.npmjs.com/package/@veaba/qrcode-node>
 - <https://www.npmjs.com/package/@veaba/qrcode-bun>
 - <https://www.npmjs.com/package/@veaba/qrcode-js>
-- <https://crates.io/crates/qrcode-rust> (Rust crate，非 npm)
+- <https://crates.io/crates/qrcode-rust-shared> (Rust crate)
+- <https://crates.io/crates/qrcode-rust> (Rust crate)
+- <https://crates.io/crates/qrcode-fast> (Rust crate)
 
 ### 2. 安装测试
 
@@ -469,9 +482,11 @@ npm 包（按依赖顺序）：
 4. `@veaba/qrcode-bun`
 5. `@veaba/qrcode-js`
 
-Rust crate：
+Rust crate（按依赖顺序）：
 
-- `qrcode-rust`（发布到 crates.io，独立流程）
+1. `qrcode-rust-shared` (最先)
+2. `qrcode-rust`
+3. `qrcode-fast`
 
 ### Q5: 版本冲突
 
@@ -509,11 +524,13 @@ npm config set otp 123456
 
 - [ ] 所有测试通过
 - [ ] 代码已提交到 git
-- [ ] 版本号已更新
+- [ ] 已添加变更集 (`pnpm changeset:add`)
+- [ ] 版本已升级 (`pnpm ci:version`)
 - [ ] CHANGELOG 已更新
 - [ ] README 已更新
 - [ ] 构建产物已生成
 - [ ] 已登录 npm
+- [ ] 已登录 crates.io (`cargo login`)
 - [ ] 有发布权限
 - [ ] 包名可用
 

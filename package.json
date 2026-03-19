@@ -48,7 +48,8 @@
     "changeset:status": "changeset status",
     "changeset:version": "changeset version",
     "changeset:publish": "changeset publish",
-    "ci:version": "changeset version && pnpm install",
+    "version:sync": "node scripts/sync-cargo-version.js",
+    "ci:version": "changeset version && pnpm run version:sync && pnpm install",
     "ci:publish": "changeset publish",
     "clippy": "cargo clippy --fix"
   },
