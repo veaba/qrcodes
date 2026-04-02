@@ -1,5 +1,11 @@
 # @veaba/qrcode-js
 
+## 0.1.4
+
+### Patch Changes
+
+- fix: move @veaba/qrcode-js-shared from dependencies to devDependencies
+
 ## 0.1.3
 
 ### Patch Changes
