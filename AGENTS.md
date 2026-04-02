@@ -238,6 +238,34 @@ pnpm changeset:version
 pnpm changeset:publish
 ```
 
+### Release CI 说明
+
+Release workflow (`.github/workflows/release.yml`) 会：
+
+1. 构建所有 npm 包
+2. **智能检测** crates.io 是否已存在相同版本
+3. 如果版本已存在，自动跳过而不是报错
+4. 最后通过 changesets/action 发布 npm 包
+
+**注意事项**：
+
+- npm 包和 crates 包版本解耦
+- 如果只改动 JS 代码，crates 包会自动跳过发布
+- crates.io 版本冲突不会导致 CI 失败（只会警告并跳过）
+
+### 版本管理建议
+
+| 改动类型 | npm 版本 | crates 版本 |
+|---------|---------|------------|
+| JS/TS 代码改动 | ✅ 需要 | ❌ 不需要 |
+| Rust 代码改动 | ✅ 需要 | ✅ 需要 |
+| 仅文档改动 | ✅ 需要 | ❌ 不需要 |
+
+如果 npm 包发布了新版本但 Rust 代码未改动：
+- Changesets 会生成新的 npm 版本号（如 0.1.4）
+- crates 包版本保持不变（如 0.1.3）
+- Release CI 会检测到 crates 版本已存在并跳过
+
 ## 代码风格
 
 ### TypeScript
