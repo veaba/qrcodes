@@ -90,11 +90,12 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_rust_shared }}"
-          if cargo search qrcode-rust-shared --limit 1 2>/dev/null | grep -q "qrcode-rust-shared = \"$VERSION\""; then
+          # 使用 crates.io registry 搜索，检查版本是否已存在
+          if cargo search qrcode-rust-shared --limit 1 --registry crates-io 2>/dev/null | grep -qE "^qrcode-rust-shared = \"$VERSION\""; then
             echo "✅ qrcode-rust-shared v$VERSION already exists, skipping"
           else
             echo "📦 Publishing qrcode-rust-shared v$VERSION..."
-            cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN"
+            cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN" --registry crates-io
             echo "✅ qrcode-rust-shared published"
           fi
 
@@ -107,12 +108,12 @@ jobs:
         continue-on-error: true
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_rust }}"
-          if cargo search qrcode-rust --limit 1 2>/dev/null | grep -q "qrcode-rust = \"$VERSION\""; then
+          if cargo search qrcode-rust --limit 1 --registry crates-io 2>/dev/null | grep -qE "^qrcode-rust = \"$VERSION\""; then
             echo "✅ qrcode-rust v$VERSION already exists, skipping"
           else
             echo "📦 Publishing qrcode-rust v$VERSION..."
             for i in 1 2 3; do
-              if cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
+              if cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1; then
                 echo "✅ qrcode-rust published"
                 exit 0
               fi
@@ -129,12 +130,12 @@ jobs:
         continue-on-error: true
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_fast }}"
-          if cargo search qrcode-fast --limit 1 2>/dev/null | grep -q "qrcode-fast = \"$VERSION\""; then
+          if cargo search qrcode-fast --limit 1 --registry crates-io 2>/dev/null | grep -qE "^qrcode-fast = \"$VERSION\""; then
             echo "✅ qrcode-fast v$VERSION already exists, skipping"
           else
             echo "📦 Publishing qrcode-fast v$VERSION..."
             for i in 1 2 3; do
-              if cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
+              if cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1; then
                 echo "✅ qrcode-fast published"
                 exit 0
               fi
