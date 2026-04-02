@@ -107,25 +107,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Install Chrome dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libnss3 \
-            libatk-bridge2.0-0 \
-            libdrm2 \
-            libxcomposite1 \
-            libxdamage1 \
-            libxrandr2 \
-            libgbm1 \
-            libpango-1.0-0 \
-            libxcursor1 \
-            libxkbcommon0 \
-            libxss1 \
-            libasound2t64
-
-      - name: Install Playwright browsers
-        run: pnpx playwright install chromium
+      - name: Install Playwright browsers and dependencies
+        run: pnpm exec playwright install chromium --with-deps
 
       - name: Build qrcode-wasm
         run: pnpm --filter @veaba/qrcode-wasm build
