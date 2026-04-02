@@ -85,66 +85,102 @@ jobs:
           echo "qrcode_rust=$(node -p "require('./packages/qrcode-rust/package.json').version")" >> $GITHUB_OUTPUT
           echo "qrcode_fast=$(node -p "require('./packages/qrcode-fast/package.json').version")" >> $GITHUB_OUTPUT
 
+      # 使用 crates.io API 检测版本是否存在（比 cargo search 更可靠）
+      - name: Check if qrcode-rust-shared exists on crates.io
+        id: check-shared
+        run: |
+          VERSION="${{ steps.versions.outputs.qrcode_rust_shared }}"
+          EXISTS=$(curl -s "https://crates.io/api/v1/crates/qrcode-rust-shared" | grep -o "\"newest_version\":\"$VERSION\"" || echo "")
+          if [ -n "$EXISTS" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish qrcode-rust-shared to crates.io
+        if: steps.check-shared.outputs.exists == 'false'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_rust_shared }}"
-          # 使用 crates.io registry 搜索，检查版本是否已存在
-          if cargo search qrcode-rust-shared --limit 1 --registry crates-io 2>/dev/null | grep -qE "^qrcode-rust-shared = \"$VERSION\""; then
-            echo "✅ qrcode-rust-shared v$VERSION already exists, skipping"
-          else
-            echo "📦 Publishing qrcode-rust-shared v$VERSION..."
-            cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN" --registry crates-io
-            echo "✅ qrcode-rust-shared published"
-          fi
+          echo "📦 Publishing qrcode-rust-shared v$VERSION..."
+          cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN" --registry crates-io
+          echo "✅ qrcode-rust-shared published"
+
+      - name: Skip qrcode-rust-shared (already exists)
+        if: steps.check-shared.outputs.exists == 'true'
+        run: echo "✅ qrcode-rust-shared v${{ steps.versions.outputs.qrcode_rust_shared }} already exists, skipping"
 
       - name: Wait for crates.io index
         run: sleep 30
 
+      - name: Check if qrcode-rust exists on crates.io
+        id: check-rust
+        run: |
+          VERSION="${{ steps.versions.outputs.qrcode_rust }}"
+          EXISTS=$(curl -s "https://crates.io/api/v1/crates/qrcode-rust" | grep -o "\"newest_version\":\"$VERSION\"" || echo "")
+          if [ -n "$EXISTS" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish qrcode-rust to crates.io
+        if: steps.check-rust.outputs.exists == 'false'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         continue-on-error: true
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_rust }}"
-          if cargo search qrcode-rust --limit 1 --registry crates-io 2>/dev/null | grep -qE "^qrcode-rust = \"$VERSION\""; then
-            echo "✅ qrcode-rust v$VERSION already exists, skipping"
+          echo "📦 Publishing qrcode-rust v$VERSION..."
+          for i in 1 2 3; do
+            if cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1; then
+              echo "✅ qrcode-rust published"
+              exit 0
+            fi
+            echo "⚠️ Attempt $i failed, retrying in 30s..."
+            sleep 30
+          done
+          echo "❌ Failed to publish qrcode-rust"
+          exit 1
+
+      - name: Skip qrcode-rust (already exists)
+        if: steps.check-rust.outputs.exists == 'true'
+        run: echo "✅ qrcode-rust v${{ steps.versions.outputs.qrcode_rust }} already exists, skipping"
+
+      - name: Check if qrcode-fast exists on crates.io
+        id: check-fast
+        run: |
+          VERSION="${{ steps.versions.outputs.qrcode_fast }}"
+          EXISTS=$(curl -s "https://crates.io/api/v1/crates/qrcode-fast" | grep -o "\"newest_version\":\"$VERSION\"" || echo "")
+          if [ -n "$EXISTS" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "📦 Publishing qrcode-rust v$VERSION..."
-            for i in 1 2 3; do
-              if cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1; then
-                echo "✅ qrcode-rust published"
-                exit 0
-              fi
-              echo "⚠️ Attempt $i failed, retrying in 30s..."
-              sleep 30
-            done
-            echo "❌ Failed to publish qrcode-rust"
-            exit 1
+            echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Publish qrcode-fast to crates.io
+        if: steps.check-fast.outputs.exists == 'false'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         continue-on-error: true
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_fast }}"
-          if cargo search qrcode-fast --limit 1 --registry crates-io 2>/dev/null | grep -qE "^qrcode-fast = \"$VERSION\""; then
-            echo "✅ qrcode-fast v$VERSION already exists, skipping"
-          else
-            echo "📦 Publishing qrcode-fast v$VERSION..."
-            for i in 1 2 3; do
-              if cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1; then
-                echo "✅ qrcode-fast published"
-                exit 0
-              fi
-              echo "⚠️ Attempt $i failed, retrying in 30s..."
-              sleep 30
-            done
-            echo "❌ Failed to publish qrcode-fast"
-            exit 1
-          fi
+          echo "📦 Publishing qrcode-fast v$VERSION..."
+          for i in 1 2 3; do
+            if cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1; then
+              echo "✅ qrcode-fast published"
+              exit 0
+            fi
+            echo "⚠️ Attempt $i failed, retrying in 30s..."
+            sleep 30
+          done
+          echo "❌ Failed to publish qrcode-fast"
+          exit 1
+
+      - name: Skip qrcode-fast (already exists)
+        if: steps.check-fast.outputs.exists == 'true'
+        run: echo "✅ qrcode-fast v${{ steps.versions.outputs.qrcode_fast }} already exists, skipping"
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
