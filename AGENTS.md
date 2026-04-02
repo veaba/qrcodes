@@ -222,7 +222,7 @@ sudo apt-get install -y libnss3 libatk-bridge2.0-0 libdrm2 ...
 
 ## 发布流程
 
-使用 Changesets 管理版本：
+使用 Changesets 管理所有版本（npm + crates）：
 
 ```bash
 # 添加变更说明
@@ -231,10 +231,10 @@ pnpm changeset:add
 # 检查变更状态
 pnpm changeset:status
 
-# 更新版本号
+# 更新版本号（changesets 自动决定 npm 和 crates 的版本）
 pnpm changeset:version
 
-# 发布到 npm
+# 发布到 npm 和 crates.io（Release CI 自动处理）
 pnpm changeset:publish
 ```
 
@@ -242,29 +242,31 @@ pnpm changeset:publish
 
 Release workflow (`.github/workflows/release.yml`) 会：
 
-1. 构建所有 npm 包
-2. **智能检测** crates.io 是否已存在相同版本
-3. 如果版本已存在，自动跳过而不是报错
-4. 最后通过 changesets/action 发布 npm 包
+1. 构建所有包
+2. 读取 package.json 中的版本号（由 changesets 生成）
+3. **检查 crates.io**：如果同版本已存在，跳过发布
+4. 发布到 npm（通过 changesets/action）
 
-**注意事项**：
+**核心逻辑**：
 
-- npm 包和 crates 包版本解耦
-- 如果只改动 JS 代码，crates 包会自动跳过发布
-- crates.io 版本冲突不会导致 CI 失败（只会警告并跳过）
+```yaml
+# 检查 crates.io 是否已有同版本
+if cargo search qrcode-rust-shared --limit 1 | grep -q "= \"0.1.3\""; then
+  echo "✅ v0.1.3 already exists, skipping"
+else
+  cargo publish -p qrcode-rust-shared  # 发布新版本
+fi
+```
 
-### 版本管理建议
+### 版本管理
 
-| 改动类型 | npm 版本 | crates 版本 |
-|---------|---------|------------|
-| JS/TS 代码改动 | ✅ 需要 | ❌ 不需要 |
-| Rust 代码改动 | ✅ 需要 | ✅ 需要 |
-| 仅文档改动 | ✅ 需要 | ❌ 不需要 |
+| 改动类型 | changesets 版本 | npm 发布 | crates 发布 |
+|---------|----------------|---------|-------------|
+| JS 代码改动 | 0.1.3 → 0.1.4 | ✅ 0.1.4 | ⚠️ 检测到 0.1.3 已存在 → 跳过 |
+| Rust 代码改动 | 0.1.3 → 0.1.4 | ✅ 0.1.4 | ✅ 0.1.4（新） |
+| 仅文档改动 | 0.1.3 → 0.1.4 | ✅ 0.1.4 | ⚠️ 检测到 0.1.3 已存在 → 跳过 |
 
-如果 npm 包发布了新版本但 Rust 代码未改动：
-- Changesets 会生成新的 npm 版本号（如 0.1.4）
-- crates 包版本保持不变（如 0.1.3）
-- Release CI 会检测到 crates 版本已存在并跳过
+> changesets 统一管理版本号，crates.io 发布时检测重复版本并跳过。
 
 ## 代码风格
 
