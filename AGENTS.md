@@ -165,7 +165,11 @@ CI 配置在 `.github/workflows/ci.yml`，包含：
 
 - 使用 `pnpm install --frozen-lockfile` 确保依赖一致性
 - 如果修改了 `package.json` 中的依赖，**必须**在本地运行 `pnpm install` 更新 `pnpm-lock.yaml` 并提交
-- pnpm 版本已锁定为 v10，不要降级
+- pnpm 版本由 `package.json` 的 `packageManager` 字段指定
+- **不要**在 CI workflow 中设置 `pnpm/action-setup` 的 `version` 参数，否则会产生版本冲突错误：
+  ```
+  Error: Multiple versions of pnpm specified
+  ```
 
 ## 常见问题
 
