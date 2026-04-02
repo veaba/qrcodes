@@ -51,7 +51,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24  # npm OIDC requires CLI 11.5.1+
+          node-version: 24
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
@@ -76,73 +76,92 @@ jobs:
       # ========================================
       # Publish Rust Crates to crates.io
       # ========================================
-      # 注意：需要在 GitHub Secrets 中配置 CARGO_REGISTRY_TOKEN
-      # 从 https://crates.io/settings/tokens 获取并添加到仓库 Secrets
-      #
-      # 发布顺序（依赖关系）：
-      # 1. qrcode-rust-shared (基础库，无依赖)
-      # 2. qrcode-rust, qrcode-fast (都依赖 qrcode-rust-shared)
-      #
-      # 本地测试 --dry-run 命令：
-      #   cargo publish -p qrcode-rust-shared --dry-run --registry crates-io
-      #   cargo publish -p qrcode-rust --dry-run --registry crates-io
-      #   cargo publish -p qrcode-fast --dry-run --registry crates-io
-      #
-      # 注意：首次发布时，qrcode-rust 和 qrcode-fast 的 --dry-run 会失败，
-      # 因为 qrcode-rust-shared 还没发布到 crates.io。这是正常的。
+      # 检测当前版本号，如果已存在则跳过，避免版本冲突错误
 
-      # Step 1: 发布基础库 qrcode-rust-shared
+      # Step 1: 获取当前 package.json 中的版本号
+      - name: Get current versions
+        id: versions
+        run: |
+          echo "qrcode_rust_shared=$(node -p "require('./packages/qrcode-rust-shared/package.json').version")" >> $GITHUB_OUTPUT
+          echo "qrcode_rust=$(node -p "require('./packages/qrcode-rust/package.json').version")" >> $GITHUB_OUTPUT
+          echo "qrcode_fast=$(node -p "require('./packages/qrcode-fast/package.json').version")" >> $GITHUB_OUTPUT
+
+      # Step 2: 检查并发布 qrcode-rust-shared
       - name: Publish qrcode-rust-shared to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
-          echo "📦 Publishing qrcode-rust-shared..."
-          cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN"
-          echo "✅ qrcode-rust-shared published successfully"
+          VERSION="${{ steps.versions.outputs.qrcode_rust_shared }}"
+          echo "📦 Checking qrcode-rust-shared v$VERSION on crates.io..."
 
-      # Step 2: 等待 crates.io 索引更新（通常需要 30-60 秒）
+          # 检查是否已存在
+          EXISTING=$(cargo search qrcode-rust-shared --limit 1 2>/dev/null | grep "qrcode-rust-shared =" || echo "")
+          if echo "$EXISTING" | grep -q "=\"$VERSION\""; then
+            echo "✅ qrcode-rust-shared v$VERSION already exists, skipping"
+          else
+            echo "📦 Publishing qrcode-rust-shared v$VERSION..."
+            if cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
+              echo "✅ qrcode-rust-shared v$VERSION published successfully"
+            else
+              echo "⚠️ Publish failed (may already exist), skipping"
+            fi
+          fi
+
+      # Step 3: 等待 crates.io 索引更新
       - name: Wait for crates.io index update
-        run: |
-          echo "⏳ Waiting for crates.io index to update..."
-          sleep 60
-          echo "✅ Proceeding with dependent crates"
+        run: sleep 30
 
-      # Step 3: 发布依赖库（并行但带重试）
+      # Step 4: 检查并发布 qrcode-rust
       - name: Publish qrcode-rust to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          echo "📦 Publishing qrcode-rust..."
-          # 如果失败，等待后重试（处理索引延迟）
-          for i in 1 2 3; do
-            if cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN"; then
-              echo "✅ qrcode-rust published successfully"
-              exit 0
-            fi
-            echo "⚠️ Attempt $i failed, waiting 30s for index update..."
-            sleep 30
-          done
-          echo "❌ Failed to publish qrcode-rust after 3 attempts"
-          exit 1
         continue-on-error: true
+        run: |
+          VERSION="${{ steps.versions.outputs.qrcode_rust }}"
+          echo "📦 Checking qrcode-rust v$VERSION on crates.io..."
 
+          EXISTING=$(cargo search qrcode-rust --limit 1 2>/dev/null | grep "^qrcode-rust =" || echo "")
+          if echo "$EXISTING" | grep -q "=\"$VERSION\""; then
+            echo "✅ qrcode-rust v$VERSION already exists, skipping"
+          else
+            echo "📦 Publishing qrcode-rust v$VERSION..."
+            for i in 1 2 3; do
+              if cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
+                echo "✅ qrcode-rust v$VERSION published successfully"
+                exit 0
+              fi
+              echo "⚠️ Attempt $i failed, retrying in 30s..."
+              sleep 30
+            done
+            echo "❌ Failed to publish qrcode-rust after 3 attempts"
+            exit 1
+          fi
+
+      # Step 5: 检查并发布 qrcode-fast
       - name: Publish qrcode-fast to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          echo "📦 Publishing qrcode-fast..."
-          # 如果失败，等待后重试（处理索引延迟）
-          for i in 1 2 3; do
-            if cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN"; then
-              echo "✅ qrcode-fast published successfully"
-              exit 0
-            fi
-            echo "⚠️ Attempt $i failed, waiting 30s for index update..."
-            sleep 30
-          done
-          echo "❌ Failed to publish qrcode-fast after 3 attempts"
-          exit 1
         continue-on-error: true
+        run: |
+          VERSION="${{ steps.versions.outputs.qrcode_fast }}"
+          echo "📦 Checking qrcode-fast v$VERSION on crates.io..."
+
+          EXISTING=$(cargo search qrcode-fast --limit 1 2>/dev/null | grep "^qrcode-fast =" || echo "")
+          if echo "$EXISTING" | grep -q "=\"$VERSION\""; then
+            echo "✅ qrcode-fast v$VERSION already exists, skipping"
+          else
+            echo "📦 Publishing qrcode-fast v$VERSION..."
+            for i in 1 2 3; do
+              if cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
+                echo "✅ qrcode-fast v$VERSION published successfully"
+                exit 0
+              fi
+              echo "⚠️ Attempt $i failed, retrying in 30s..."
+              sleep 30
+            done
+            echo "❌ Failed to publish qrcode-fast after 3 attempts"
+            exit 1
+          fi
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
@@ -153,7 +172,3 @@ jobs:
           title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 注意：使用 OIDC 认证，不需要 NODE_AUTH_TOKEN
-          # 确保在 npmjs.com 上为每个包配置了 Trusted Publisher:
-          # https://www.npmjs.com/package/@veaba/xxx/access
-          # Publisher 配置: org=veaba, repo=qrcodes, workflow=release.yml
