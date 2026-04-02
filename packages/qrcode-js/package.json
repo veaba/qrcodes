@@ -1,6 +1,6 @@
 {
   "name": "@veaba/qrcode-js",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "author": "veaba",
   "license": "MIT",
   "repository": {
@@ -43,10 +43,8 @@
     "barcode",
     "cache"
   ],
-  "dependencies": {
-    "@veaba/qrcode-js-shared": "workspace:*"
-  },
   "devDependencies": {
+    "@veaba/qrcode-js-shared": "workspace:*",
     "tsdown": "^0.10.0",
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
