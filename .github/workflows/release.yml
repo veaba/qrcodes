@@ -76,90 +76,72 @@ jobs:
       # ========================================
       # Publish Rust Crates to crates.io
       # ========================================
-      # 检测当前版本号，如果已存在则跳过，避免版本冲突错误
+      # 由 changesets 管理版本号，如果 crates.io 已存在同版本则跳过
 
-      # Step 1: 获取当前 package.json 中的版本号
-      - name: Get current versions
+      - name: Get versions from package.json
         id: versions
         run: |
           echo "qrcode_rust_shared=$(node -p "require('./packages/qrcode-rust-shared/package.json').version")" >> $GITHUB_OUTPUT
           echo "qrcode_rust=$(node -p "require('./packages/qrcode-rust/package.json').version")" >> $GITHUB_OUTPUT
           echo "qrcode_fast=$(node -p "require('./packages/qrcode-fast/package.json').version")" >> $GITHUB_OUTPUT
 
-      # Step 2: 检查并发布 qrcode-rust-shared
       - name: Publish qrcode-rust-shared to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_rust_shared }}"
-          echo "📦 Checking qrcode-rust-shared v$VERSION on crates.io..."
-
-          # 检查是否已存在
-          EXISTING=$(cargo search qrcode-rust-shared --limit 1 2>/dev/null | grep "qrcode-rust-shared =" || echo "")
-          if echo "$EXISTING" | grep -q "=\"$VERSION\""; then
+          if cargo search qrcode-rust-shared --limit 1 2>/dev/null | grep -q "qrcode-rust-shared = \"$VERSION\""; then
             echo "✅ qrcode-rust-shared v$VERSION already exists, skipping"
           else
             echo "📦 Publishing qrcode-rust-shared v$VERSION..."
-            if cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
-              echo "✅ qrcode-rust-shared v$VERSION published successfully"
-            else
-              echo "⚠️ Publish failed (may already exist), skipping"
-            fi
+            cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN"
+            echo "✅ qrcode-rust-shared published"
           fi
 
-      # Step 3: 等待 crates.io 索引更新
-      - name: Wait for crates.io index update
+      - name: Wait for crates.io index
         run: sleep 30
 
-      # Step 4: 检查并发布 qrcode-rust
       - name: Publish qrcode-rust to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         continue-on-error: true
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_rust }}"
-          echo "📦 Checking qrcode-rust v$VERSION on crates.io..."
-
-          EXISTING=$(cargo search qrcode-rust --limit 1 2>/dev/null | grep "^qrcode-rust =" || echo "")
-          if echo "$EXISTING" | grep -q "=\"$VERSION\""; then
+          if cargo search qrcode-rust --limit 1 2>/dev/null | grep -q "qrcode-rust = \"$VERSION\""; then
             echo "✅ qrcode-rust v$VERSION already exists, skipping"
           else
             echo "📦 Publishing qrcode-rust v$VERSION..."
             for i in 1 2 3; do
               if cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
-                echo "✅ qrcode-rust v$VERSION published successfully"
+                echo "✅ qrcode-rust published"
                 exit 0
               fi
               echo "⚠️ Attempt $i failed, retrying in 30s..."
               sleep 30
             done
-            echo "❌ Failed to publish qrcode-rust after 3 attempts"
+            echo "❌ Failed to publish qrcode-rust"
             exit 1
           fi
 
-      # Step 5: 检查并发布 qrcode-fast
       - name: Publish qrcode-fast to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         continue-on-error: true
         run: |
           VERSION="${{ steps.versions.outputs.qrcode_fast }}"
-          echo "📦 Checking qrcode-fast v$VERSION on crates.io..."
-
-          EXISTING=$(cargo search qrcode-fast --limit 1 2>/dev/null | grep "^qrcode-fast =" || echo "")
-          if echo "$EXISTING" | grep -q "=\"$VERSION\""; then
+          if cargo search qrcode-fast --limit 1 2>/dev/null | grep -q "qrcode-fast = \"$VERSION\""; then
             echo "✅ qrcode-fast v$VERSION already exists, skipping"
           else
             echo "📦 Publishing qrcode-fast v$VERSION..."
             for i in 1 2 3; do
               if cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN" 2>&1; then
-                echo "✅ qrcode-fast v$VERSION published successfully"
+                echo "✅ qrcode-fast published"
                 exit 0
               fi
               echo "⚠️ Attempt $i failed, retrying in 30s..."
               sleep 30
             done
-            echo "❌ Failed to publish qrcode-fast after 3 attempts"
+            echo "❌ Failed to publish qrcode-fast"
             exit 1
           fi
 
