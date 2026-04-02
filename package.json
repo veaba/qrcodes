@@ -67,5 +67,5 @@
   "dependencies": {
     "rspress": "^1.47.1"
   },
-  "packageManager": "pnpm@10.11.0+sha512.86138b99a3a32ba23665c3a261624286ac51e6078980fa11b9092626379708cdd4d96b29e339820a62ae21da9fd56f5640ab75f830c8ca0fe071529d912a28e1"
+  "packageManager": "pnpm@10.11.0"
 }
