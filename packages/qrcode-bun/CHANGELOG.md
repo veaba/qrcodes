@@ -1,5 +1,13 @@
 # @veaba/qrcode-bun
 
+## 0.2.0
+
+### Minor Changes
+
+- release: v0.2.0:
+
+  - feat: add `toTerminal` method on CLI env.
+
 ## 0.1.3
 
 ### Patch Changes
