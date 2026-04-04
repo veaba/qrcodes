@@ -101,6 +101,53 @@ fn main() {
 }
 ```
 
+### 终端输出（Terminal Output）
+
+```rust
+use qrcode_fast::{QRCode, QRErrorCorrectLevel};
+
+fn main() {
+    let mut qr = QRCode::with_options(QRErrorCorrectLevel::M);
+    qr.make_code("https://example.com");
+
+    // 标准终端输出
+    println!("{}", qr.to_terminal(false, 1));
+
+    // 反转颜色
+    println!("{}", qr.to_terminal(true, 1));
+
+    // 大静区
+    println!("{}", qr.to_terminal(false, 3));
+
+    // Braille 紧凑输出
+    println!("{}", qr.to_terminal_braille());
+
+    // 彩色输出
+    println!("{}", qr.to_terminal_color("green", "white"));
+}
+```
+
+#### 终端输出示例
+
+标准输出：
+```
+  ██████████████    ██████████████    ██████████████
+  ██          ██  ██  ██████  ██████  ██          ██
+  ██  ██████  ██      ████      ████  ██  ██████  ██
+  ██████████████  ██  ██  ██  ██  ██  ██████████████
+```
+
+Braille 输出：
+```
+⠟⣝⠝⠏⡌⡒⢱⢮⠃⠟⣝⠝⠏
+⡇⡕⡅⠇⠟⠥⠔⠮⠍⡇⡕⡅⠇
+⣭⣕⢿⠅⡎⢪⣡⣄⠬⣹⡑⡡⠌
+```
+
+#### 支持的颜色
+
+`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`
+
 ## 批量生成
 
 ### 顺序生成
@@ -321,6 +368,20 @@ cd packages/qrcode-fast
 cargo bench --bench comparison_bench
 ```
 
+### 使用 bench/rust-tools
+
+使用 `bench/rust-tools` 进行 SVG 性能对比和终端输出演示：
+
+```bash
+cd bench/rust-tools
+
+# 终端输出演示
+cargo run --release --bin terminal_demo -- "Hello World"
+
+# 完整基准测试
+cargo run --release --features validation --bin benchmark-full
+```
+
 ### SVG 基准测试
 
 使用 `bench/rust-tools` 进行 SVG 性能对比：
@@ -400,6 +461,9 @@ pub enum QRErrorCorrectLevel {
 | `get_svg()` | 获取 SVG 字符串 | `String` |
 | `get_module_count()` | 获取模块数量 | `i32` |
 | `is_dark(row, col)` | 判断指定位置是否为深色 | `bool` |
+| `to_terminal(invert, quiet_zone)` | 终端输出 | `String` |
+| `to_terminal_braille()` | Braille 终端 | `String` |
+| `to_terminal_color(fg, bg)` | 彩色终端 | `String` |
 
 ## 何时使用 @veaba/qrcode-fast？
 

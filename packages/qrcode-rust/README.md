@@ -68,6 +68,24 @@ fn main() {
 }
 ```
 
+### 终端输出
+
+```rust
+use qrcode_rust::{QRCode, QRErrorCorrectLevel};
+
+let mut qr = QRCode::with_options(QRErrorCorrectLevel::M);
+qr.make_code("https://example.com");
+
+// 标准终端输出
+println!("{}", qr.to_terminal(false, 1));
+
+// Braille 紧凑输出
+println!("{}", qr.to_terminal_braille());
+
+// 彩色终端输出
+println!("{}", qr.to_terminal_color("green", "white"));
+```
+
 ## API 文档
 
 ### QRCode
@@ -167,15 +185,24 @@ cargo build
 
 ### 运行测试
 
+包内的单元测试已迁移至 `bench/rust-tools`，使用集成测试工具运行：
+
 ```bash
-# 运行所有测试
-cargo test
+cd ../../bench/rust-tools
 
-# 运行特定测试
-cargo test test_qrcode_basic_creation
+# 运行 qrcode-rust 集成测试
+cargo run --release --bin test_qrcode_rust
+```
 
-# 运行测试并显示输出
-cargo test -- --nocapture
+预期输出：
+```
+═══════════════════════════════════════
+  @veaba/qrcode-rust 集成测试套件
+═══════════════════════════════════════
+  通过：15
+  失败：0
+  总计：15
+✅ @veaba/qrcode-rust 所有测试通过！
 ```
 
 ### 验证工具
@@ -183,10 +210,16 @@ cargo test -- --nocapture
 项目包含完整的验证工具，可以验证生成的 QRCode 是否能被正确扫描：
 
 ```bash
-cd ../bench/rust-tools
+cd ../../bench/rust-tools
 
 # 验证生成结果
 cargo run --release --features validation --bin veaba-qr -- "你的文本"
+
+# 终端输出演示
+cargo run --release --bin terminal_demo -- "Hello World"
+
+# 运行集成测试
+cargo run --release --bin test_qrcodes
 ```
 
 ### 调试示例
@@ -272,6 +305,7 @@ MIT License
 ### 历史变更
 
 - **2026-02-06**: 删除 `examples/` 目录，功能由 `bench/rust-tools` 覆盖，保持包目录干净。
+- **2026-04-05**: 删除包内 `#[cfg(test)]` 测试代码，迁移至 `bench/rust-tools/src/bin/test_qrcodes.rs` 统一测试。
 
 ### 待办事项
 

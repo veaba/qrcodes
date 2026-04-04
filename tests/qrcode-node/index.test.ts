@@ -340,3 +340,143 @@ describe('@veaba/qrcode-node - URL String Tests', () => {
     }
   });
 });
+
+describe('@veaba/qrcode-node - Terminal Output', () => {
+  describe('toTerminal()', () => {
+    it('should generate terminal string for simple text', () => {
+      const qr = new QRCode('Hello', QRErrorCorrectLevel.L);
+      const terminal = qr.toTerminal();
+
+      expect(terminal).toBeDefined();
+      expect(typeof terminal).toBe('string');
+      expect(terminal.length).toBeGreaterThan(0);
+    });
+
+    it('should contain block characters', () => {
+      const qr = new QRCode('Test', QRErrorCorrectLevel.M);
+      const terminal = qr.toTerminal();
+
+      expect(terminal).toContain('█');
+      expect(terminal).toContain(' ');
+    });
+
+    it('should have correct dimensions (with default quietZone=1)', () => {
+      const qr = new QRCode('QR Code Test', QRErrorCorrectLevel.H);
+      const terminal = qr.toTerminal();
+      const lines = terminal.split('\n');
+
+      // Height: moduleCount + quietZone*2 = moduleCount + 2
+      // Width: (moduleCount + quietZone*2) * 2 = (moduleCount + 2) * 2
+      expect(lines.length).toBe(qr.moduleCount + 2);
+      expect(lines[0].length).toBe((qr.moduleCount + 2) * 2);
+    });
+
+    it('should add quiet zone when specified', () => {
+      const qr = new QRCode('Test', QRErrorCorrectLevel.L);
+      const quietZone = 2;
+      const terminal = qr.toTerminal(false, quietZone);
+      const lines = terminal.split('\n');
+
+      const expectedHeight = qr.moduleCount + quietZone * 2;
+      const expectedWidth = (qr.moduleCount + quietZone * 2) * 2;
+      expect(lines.length).toBe(expectedHeight);
+      expect(lines[0].length).toBe(expectedWidth);
+    });
+
+    it('should have visual square aspect ratio (width = 2x height)', () => {
+      const qr = new QRCode('Aspect Ratio Test', QRErrorCorrectLevel.M);
+      const terminal = qr.toTerminal();
+      const lines = terminal.split('\n');
+
+      // Width should be 2x height for visual square (compensating for terminal char aspect ratio)
+      const height = lines.length;
+      const width = lines[0].length;
+      expect(width).toBe(height * 2);
+    });
+
+    it('should invert colors when invert=true', () => {
+      const qr = new QRCode('Invert Test', QRErrorCorrectLevel.M);
+      const normal = qr.toTerminal(false);
+      const inverted = qr.toTerminal(true);
+
+      expect(normal).not.toBe(inverted);
+      const normalBlocks = (normal.match(/█/g) || []).length;
+      const invertedBlocks = (inverted.match(/█/g) || []).length;
+      expect(normalBlocks).not.toBe(invertedBlocks);
+    });
+
+    it('should generate consistent output for same input', () => {
+      const qr1 = new QRCode('Consistent Test', QRErrorCorrectLevel.H);
+      const qr2 = new QRCode('Consistent Test', QRErrorCorrectLevel.H);
+
+      expect(qr1.toTerminal()).toBe(qr2.toTerminal());
+    });
+  });
+
+  describe('toTerminalBraille()', () => {
+    it('should generate braille output', () => {
+      const qr = new QRCode('Braille Test', QRErrorCorrectLevel.M);
+      const braille = qr.toTerminalBraille();
+
+      expect(braille).toBeDefined();
+      expect(typeof braille).toBe('string');
+      expect(braille.length).toBeGreaterThan(0);
+    });
+
+    it('should contain braille characters', () => {
+      const qr = new QRCode('Test', QRErrorCorrectLevel.L);
+      const braille = qr.toTerminalBraille();
+
+      const brailleRegex = /[\u2800-\u28FF]/;
+      expect(braille).toMatch(brailleRegex);
+    });
+
+    it('should be more compact than regular terminal output', () => {
+      const qr = new QRCode('Compact Test', QRErrorCorrectLevel.H);
+      const terminal = qr.toTerminal();
+      const braille = qr.toTerminalBraille();
+
+      const terminalLines = terminal.split('\n').length;
+      const brailleLines = braille.split('\n').length;
+
+      expect(brailleLines).toBeLessThan(terminalLines);
+    });
+  });
+
+  describe('toTerminalColor()', () => {
+    it('should generate colored terminal output', () => {
+      const qr = new QRCode('Color Test', QRErrorCorrectLevel.M);
+      const colored = qr.toTerminalColor();
+
+      expect(colored).toBeDefined();
+      expect(typeof colored).toBe('string');
+      expect(colored).toContain('\x1b[');
+    });
+
+    it('should contain ANSI reset code', () => {
+      const qr = new QRCode('Reset Test', QRErrorCorrectLevel.L);
+      const colored = qr.toTerminalColor();
+
+      expect(colored).toContain('\x1b[0m');
+    });
+
+    it('should support different foreground colors', () => {
+      const qr = new QRCode('Color Test', QRErrorCorrectLevel.M);
+
+      const black = qr.toTerminalColor('black');
+      const red = qr.toTerminalColor('red');
+      const blue = qr.toTerminalColor('blue');
+
+      expect(black).toContain('\x1b[30m');
+      expect(red).toContain('\x1b[31m');
+      expect(blue).toContain('\x1b[34m');
+    });
+
+    it('should support background colors', () => {
+      const qr = new QRCode('BG Test', QRErrorCorrectLevel.L);
+      const colored = qr.toTerminalColor('black', 'white');
+
+      expect(colored).toContain('\x1b[47m');
+    });
+  });
+});

@@ -62,6 +62,12 @@ describe('@veaba/qrcode-wasm', () => {
     it('should export default as QRCodeCore', () => {
       expect(mod.default).toBe(mod.QRCodeCore);
     });
+
+    it('should export terminal methods', () => {
+      expect(typeof mod.QRCodeCore.prototype.toTerminal).toBe('function');
+      expect(typeof mod.QRCodeCore.prototype.toTerminalBraille).toBe('function');
+      expect(typeof mod.QRCodeCore.prototype.toTerminalColor).toBe('function');
+    });
   });
 
   describe('API Consistency with qrcode-js', () => {
@@ -91,7 +97,7 @@ describe('@veaba/qrcode-wasm', () => {
   describe('QRCodeCore Structure', () => {
     it('should have correct prototype', () => {
       expect(typeof mod.QRCodeCore).toBe('function');
-      ['toSVG', 'toStyledSVG', 'getModuleCount', 'isDark'].forEach(
+      ['toSVG', 'toStyledSVG', 'getModuleCount', 'isDark', 'toTerminal', 'toTerminalBraille', 'toTerminalColor'].forEach(
         method => expect(typeof mod.QRCodeCore.prototype[method]).toBe('function')
       );
       expect(Object.getOwnPropertyDescriptor(mod.QRCodeCore.prototype, 'moduleCount')?.get).toBeDefined();
@@ -289,6 +295,71 @@ describe('@veaba/qrcode-wasm', () => {
     it.skip('should work after init', () => {});
     it.skip('should generate QR codes', () => {});
     it.skip('should use cache', () => {});
+  });
+
+  describe('Terminal Output (Requires WASM)', () => {
+    describe('toTerminal()', () => {
+      it.skip('should generate terminal string for simple text', () => {
+        const qr = new mod.QRCodeCore('Hello', mod.QRErrorCorrectLevel.L);
+        const terminal = qr.toTerminal();
+        expect(terminal).toBeDefined();
+        expect(typeof terminal).toBe('string');
+        expect(terminal.length).toBeGreaterThan(0);
+      });
+
+      it.skip('should contain block characters', () => {
+        const qr = new mod.QRCodeCore('Test', mod.QRErrorCorrectLevel.M);
+        const terminal = qr.toTerminal();
+        expect(terminal).toContain('█');
+        expect(terminal).toContain(' ');
+      });
+
+      it.skip('should have correct dimensions (with default quietZone=1)', () => {
+        const qr = new mod.QRCodeCore('QR Code Test', mod.QRErrorCorrectLevel.H);
+        const terminal = qr.toTerminal();
+        const lines = terminal.split('\n');
+        expect(lines.length).toBe(qr.moduleCount + 2);
+        expect(lines[0].length).toBe((qr.moduleCount + 2) * 2);
+      });
+
+      it.skip('should invert colors when invert=true', () => {
+        const qr = new mod.QRCodeCore('Invert Test', mod.QRErrorCorrectLevel.M);
+        const normal = qr.toTerminal(false);
+        const inverted = qr.toTerminal(true);
+        expect(normal).not.toBe(inverted);
+      });
+    });
+
+    describe('toTerminalBraille()', () => {
+      it.skip('should generate braille output', () => {
+        const qr = new mod.QRCodeCore('Braille Test', mod.QRErrorCorrectLevel.M);
+        const braille = qr.toTerminalBraille();
+        expect(braille).toBeDefined();
+        expect(typeof braille).toBe('string');
+      });
+
+      it.skip('should contain braille characters', () => {
+        const qr = new mod.QRCodeCore('Test', mod.QRErrorCorrectLevel.L);
+        const braille = qr.toTerminalBraille();
+        const brailleRegex = /[\u2800-\u28FF]/;
+        expect(braille).toMatch(brailleRegex);
+      });
+    });
+
+    describe('toTerminalColor()', () => {
+      it.skip('should generate colored terminal output', () => {
+        const qr = new mod.QRCodeCore('Color Test', mod.QRErrorCorrectLevel.M);
+        const colored = qr.toTerminalColor();
+        expect(colored).toBeDefined();
+        expect(colored).toContain('\x1b[');
+      });
+
+      it.skip('should contain ANSI reset code', () => {
+        const qr = new mod.QRCodeCore('Reset Test', mod.QRErrorCorrectLevel.L);
+        const colored = qr.toTerminalColor();
+        expect(colored).toContain('\x1b[0m');
+      });
+    });
   });
 
   describe('URL String Tests', () => {

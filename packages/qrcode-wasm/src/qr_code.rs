@@ -4,6 +4,7 @@
  */
 use crate::qr_code_model::QRCodeModel;
 use crate::qr_rs_block::QRErrorCorrectLevel;
+use crate::utils::get_ansi_color_code;
 
 /// QRCode 限制长度表
 const QR_CODE_LIMIT_LENGTH: &[[i32; 4]] = &[
@@ -165,6 +166,102 @@ impl QRCode {
     /// 判断指定位置是否为深色
     pub fn is_dark(&self, row: i32, col: i32) -> bool {
         self.model.as_ref().is_some_and(|m| m.is_dark(row, col))
+    }
+
+    /// 将 QRCode 渲染为终端可显示的字符画
+    pub fn to_terminal(&self, invert: bool, quiet_zone: i32) -> String {
+        let dark_char = if invert { ' ' } else { '█' };
+        let light_char = if invert { '█' } else { ' ' };
+        let dark_module = dark_char.to_string().repeat(2);
+        let light_module = light_char.to_string().repeat(2);
+
+        let mut lines: Vec<String> = Vec::new();
+        let count = self.get_module_count();
+        let total_width = ((count + quiet_zone * 2) * 2) as usize;
+
+        // 添加顶部静区
+        for _ in 0..quiet_zone {
+            lines.push(light_char.to_string().repeat(total_width));
+        }
+
+        // 渲染 QRCode 模块
+        for row in 0..count {
+            let mut line = light_char.to_string().repeat((quiet_zone * 2) as usize);
+            for col in 0..count {
+                if self.is_dark(row, col) {
+                    line.push_str(&dark_module);
+                } else {
+                    line.push_str(&light_module);
+                }
+            }
+            line.push_str(&light_char.to_string().repeat((quiet_zone * 2) as usize));
+            lines.push(line);
+        }
+
+        // 添加底部静区
+        for _ in 0..quiet_zone {
+            lines.push(light_char.to_string().repeat(total_width));
+        }
+
+        lines.join("\n")
+    }
+
+    /// 使用 Braille 字符渲染更紧凑的终端二维码
+    pub fn to_terminal_braille(&self) -> String {
+        let braille_base = 0x2800;
+        let mut result = String::new();
+        let rows = self.get_module_count() as usize;
+        let cols = rows;
+
+        for y in (0..rows).step_by(4) {
+            let mut line = String::new();
+            for x in (0..cols).step_by(2) {
+                let mut braille: u32 = 0;
+                // 左列 4 个像素
+                for dy in 0..4 {
+                    if y + dy < rows && self.is_dark((y + dy) as i32, x as i32) {
+                        braille |= 1 << dy;
+                    }
+                }
+                // 右列 4 个像素
+                for dy in 0..4 {
+                    if y + dy < rows && x + 1 < cols && self.is_dark((y + dy) as i32, (x + 1) as i32) {
+                        braille |= 1 << (4 + dy);
+                    }
+                }
+                line.push(std::char::from_u32(braille_base + braille).unwrap_or(' '));
+            }
+            result.push_str(&line);
+            result.push('\n');
+        }
+
+        result.trim_end().to_string()
+    }
+
+    /// 带颜色的终端输出（使用 ANSI 转义序列）
+    pub fn to_terminal_color(&self, fg_color: &str, bg_color: &str) -> String {
+        let fg_code = get_ansi_color_code(fg_color, false);
+        let bg_code = get_ansi_color_code(bg_color, true);
+        let reset = "\x1b[0m";
+
+        let mut result = format!("{}{}", bg_code, fg_code);
+        let count = self.get_module_count();
+
+        for row in 0..count {
+            for col in 0..count {
+                if self.is_dark(row, col) {
+                    result.push_str("██");
+                } else {
+                    result.push_str("  ");
+                }
+            }
+            if row < count - 1 {
+                result.push('\n');
+            }
+        }
+
+        result.push_str(reset);
+        result
     }
 }
 

@@ -55,8 +55,35 @@ cargo run --bin benchmark-report
 | `simple-qr` | 默认渲染 | `cargo run --bin simple-qr -- "text"` |
 | `fast-qr` | 优化渲染 | `cargo run --bin fast-qr -- "text"` |
 | `veaba-qr` | veaba 实现 | `cargo run --bin veaba-qr -- "text"` |
+| `terminal-demo` | 终端输出演示 | `cargo run --bin terminal_demo -- "text"` |
 
-### 报告与基准测试
+### 测试工具
+
+| 工具 | 功能 | 示例 |
+|------|------|------|
+| `test-qrcode-rust` | qrcode-rust 集成测试（26 项） | `cargo run --bin test_qrcode_rust` |
+| `test-qrcode-fast` | qrcode-fast 集成测试（26 项） | `cargo run --bin test_qrcode_fast` |
+| `test-terminal-rust` | qrcode-rust 终端输出测试（27 项） | `cargo run --bin test_terminal_rust` |
+| `test-terminal-fast` | qrcode-fast 终端输出测试（27 项） | `cargo run --bin test_terminal_fast` |
+| `terminal-demo` | 终端输出演示 | `cargo run --bin terminal_demo -- "text"` |
+
+测试覆盖：
+- 基础功能：基本创建、带选项创建、模块访问、SVG 生成
+- 二维码结构：位置探测图案、定时图案
+- 纠错级别：L/M/Q/H 四级别、RS 块
+- 边界情况：空字符串、长文本
+- 字符串生成：URL、中文、数字、特殊字符、混合内容、Email、JSON
+- SVG 输出：路径元素、viewBox、颜色设置、不同文本对比
+- 终端输出：标准输出、Braille、彩色、反转、静区
+
+终端输出测试覆盖：
+- 标准终端输出：基本输出、方块字符、空格、多行、行列对齐
+- 反转颜色：不同输出、仍包含方块
+- 静区：静区大小、边缘空格
+- Braille 输出：盲文字符、紧凑性
+- 彩色输出：ANSI 转义序列、前景色/背景色
+- 不同内容：中文、URL、长文本
+- 纠错级别：L/M/Q/H 四级
 
 | 工具 | 功能 | 示例 |
 |------|------|------|

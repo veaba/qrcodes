@@ -2,8 +2,8 @@
 pageType: home
 
 hero:
-  name: Wasm QRCode
-  text: 高性能 QRCode 生成库
+  name: 多引擎 QRCodes
+  text: 高性能 QRCode 库
   tagline: 支持 WASM、Node.js、Bun 和 Rust 的多运行时 QRCode 解决方案
   actions:
     - theme: brand
@@ -16,7 +16,7 @@ hero:
     src: /qrcodes.png
     # src: /favicon-128.png
     # src: /favicon.svg
-    alt: Wasm QRCode Logo
+    alt: qrcodes Logo
 
 features:
   - title: 🚀 高性能

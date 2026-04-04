@@ -35,6 +35,26 @@ const svg = qr.toSVG();
 console.log(svg);
 ```
 
+### 终端输出
+
+```typescript
+import { QRCode, QRErrorCorrectLevel } from '@veaba/qrcode-bun';
+
+const qr = new QRCode('https://example.com', QRErrorCorrectLevel.M);
+
+// 标准终端输出
+console.log(qr.toTerminal());
+
+// 反转颜色
+console.log(qr.toTerminal(true));
+
+// Braille 紧凑输出
+console.log(qr.toTerminalBraille());
+
+// 彩色输出
+console.log(qr.toTerminalColor('green'));
+```
+
 ### 保存文件
 
 ```typescript

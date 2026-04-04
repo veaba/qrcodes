@@ -69,6 +69,35 @@ export class QRCode implements INodeQRCode {
     return this._core.toStyledSVG(options);
   }
 
+  // ----- 终端显示方法 -----
+  /**
+   * 将 QRCode 渲染为终端可显示的字符画
+   * @param invert - 是否反转颜色（默认 false）
+   * @param quietZone - 静区大小（默认 1）
+   * @returns 终端字符画字符串
+   */
+  toTerminal(invert = false, quietZone = 1): string {
+    return this._core.toTerminal(invert, quietZone);
+  }
+
+  /**
+   * 使用 Braille 字符渲染更紧凑的终端二维码
+   * @returns Braille 字符画字符串
+   */
+  toTerminalBraille(): string {
+    return this._core.toTerminalBraille();
+  }
+
+  /**
+   * 带颜色的终端输出（使用 ANSI 转义序列）
+   * @param fgColor - 前景色（深色模块颜色）
+   * @param bgColor - 背景色（浅色模块颜色）
+   * @returns 带 ANSI 颜色的终端字符画
+   */
+  toTerminalColor(fgColor = 'black', bgColor = 'white'): string {
+    return this._core.toTerminalColor(fgColor, bgColor);
+  }
+
   // ----- Node.js 特有方法 -----
   toPNGBuffer(size: number = 256): Buffer {
     const cellSize = Math.floor(size / this._core.moduleCount);

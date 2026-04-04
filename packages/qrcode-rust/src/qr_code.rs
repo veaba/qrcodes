@@ -498,6 +498,130 @@ impl QRCode {
         svg.push_str(r#""/></svg>"#);
         svg
     }
+
+    /// 将 QRCode 渲染为终端可显示的字符画
+    /// 每个模块使用 2 个字符宽度，以补偿终端字符的高宽比（约 2:1）
+    /// # Arguments
+    /// * `invert` - 是否反转颜色（默认 false）
+    /// * `quiet_zone` - 静区大小（默认 1）
+    pub fn to_terminal(&self, invert: bool, quiet_zone: i32) -> String {
+        let dark_char = if invert { " " } else { "█" };
+        let light_char = if invert { "█" } else { " " };
+        let dark_module = dark_char.repeat(2);
+        let light_module = light_char.repeat(2);
+
+        let mut lines: Vec<String> = Vec::new();
+        let total_width = (self.module_count + quiet_zone * 2) * 2;
+
+        // 添加顶部静区
+        for _ in 0..quiet_zone {
+            lines.push(light_char.repeat(total_width as usize));
+        }
+
+        // 渲染 QRCode 模块
+        for row in 0..self.module_count {
+            let mut line = light_char.repeat((quiet_zone * 2) as usize);
+            for col in 0..self.module_count {
+                if self.is_dark(row, col) {
+                    line.push_str(&dark_module);
+                } else {
+                    line.push_str(&light_module);
+                }
+            }
+            line.push_str(&light_char.repeat((quiet_zone * 2) as usize));
+            lines.push(line);
+        }
+
+        // 添加底部静区
+        for _ in 0..quiet_zone {
+            lines.push(light_char.repeat(total_width as usize));
+        }
+
+        lines.join("\n")
+    }
+
+    /// 使用 Braille 字符渲染更紧凑的终端二维码
+    /// 每个字符表示 2x4 像素（宽 x 高）
+    pub fn to_terminal_braille(&self) -> String {
+        let braille_base: u32 = 0x2800;
+        let mut result = String::new();
+        let rows = self.module_count as usize;
+        let cols = self.module_count as usize;
+
+        for y in (0..rows).step_by(4) {
+            let mut line = String::new();
+            for x in (0..cols).step_by(2) {
+                let mut braille: u32 = 0;
+                // 左列 4 个像素
+                for dy in 0..4 {
+                    if y + dy < rows && self.is_dark((y + dy) as i32, x as i32) {
+                        braille |= 1 << dy;
+                    }
+                }
+                // 右列 4 个像素
+                for dy in 0..4 {
+                    if y + dy < rows && x + 1 < cols && self.is_dark((y + dy) as i32, (x + 1) as i32) {
+                        braille |= 1 << (4 + dy);
+                    }
+                }
+                line.push(char::from_u32(braille_base + braille).unwrap_or(' '));
+            }
+            result.push_str(&line);
+            result.push('\n');
+        }
+
+        result.trim_end().to_string()
+    }
+
+    /// 带颜色的终端输出（使用 ANSI 转义序列）
+    /// # Arguments
+    /// * `fg_color` - 前景色（深色模块颜色）
+    /// * `bg_color` - 背景色（浅色模块颜色）
+    pub fn to_terminal_color(&self, fg_color: &str, bg_color: &str) -> String {
+        let fg_code = self.get_ansi_color_code(fg_color, false);
+        let bg_code = self.get_ansi_color_code(bg_color, true);
+        let reset = "\x1b[0m";
+
+        let mut result = format!("{}{}", bg_code, fg_code);
+
+        for row in 0..self.module_count {
+            for col in 0..self.module_count {
+                if self.is_dark(row, col) {
+                    result.push_str("██");
+                } else {
+                    result.push_str("  ");
+                }
+            }
+            if row < self.module_count - 1 {
+                result.push('\n');
+            }
+        }
+
+        result.push_str(reset);
+        result
+    }
+
+    fn get_ansi_color_code(&self, color: &str, is_background: bool) -> String {
+        let color_map: [(&str, u8); 8] = [
+            ("black", 30),
+            ("red", 31),
+            ("green", 32),
+            ("yellow", 33),
+            ("blue", 34),
+            ("magenta", 35),
+            ("cyan", 36),
+            ("white", 37),
+        ];
+
+        let base_code = color_map
+            .iter()
+            .find(|(name, _)| name.eq_ignore_ascii_case(color))
+            .map(|(_, code)| *code)
+            .unwrap_or(37);
+
+        let code = if is_background { base_code + 10 } else { base_code };
+        format!("\x1b[{}m", code)
+    }
 }
 
 impl Default for QRCode {

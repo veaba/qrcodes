@@ -390,6 +390,123 @@ export class QRCode {
     return JSON.stringify(arr);
   }
 
+  // ----- 终端显示方法 -----
+  /**
+   * 将 QRCode 渲染为终端可显示的字符画
+   * @param invert - 是否反转颜色（默认 false）
+   * @param quietZone - 静区大小（默认 1）
+   * @returns 终端字符画字符串
+   */
+  toTerminal(invert = false, quietZone = 1): string {
+    const darkChar = invert ? ' ' : '█';
+    const lightChar = invert ? '█' : ' ';
+    const darkModule = darkChar.repeat(2);
+    const lightModule = lightChar.repeat(2);
+
+    const lines: string[] = [];
+    const totalWidth = (this.moduleCount + quietZone * 2) * 2;
+
+    // 添加顶部静区
+    for (let q = 0; q < quietZone; q++) {
+      lines.push(lightChar.repeat(totalWidth));
+    }
+
+    // 渲染 QRCode 模块
+    for (let row = 0; row < this.moduleCount; row++) {
+      let line = lightChar.repeat(quietZone * 2);
+      for (let col = 0; col < this.moduleCount; col++) {
+        line += this.isDark(row, col) ? darkModule : lightModule;
+      }
+      line += lightChar.repeat(quietZone * 2);
+      lines.push(line);
+    }
+
+    // 添加底部静区
+    for (let q = 0; q < quietZone; q++) {
+      lines.push(lightChar.repeat(totalWidth));
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * 使用 Braille 字符渲染更紧凑的终端二维码
+   * 每个字符表示 2x4 像素（宽 x 高）
+   * @returns Braille 字符画字符串
+   */
+  toTerminalBraille(): string {
+    // Braille 字符 Unicode: U+2800 到 U+28FF
+    // 位映射：1 2 4 8 (左列从上到下), 16 32 64 128 (右列从上到下)
+    const brailleBase = 0x2800;
+
+    let result = '';
+    const rows = this.moduleCount;
+    const cols = this.moduleCount;
+
+    for (let y = 0; y < rows; y += 4) {
+      let line = '';
+      for (let x = 0; x < cols; x += 2) {
+        let braille = 0;
+        // 左列 4 个像素
+        for (let dy = 0; dy < 4; dy++) {
+          if (y + dy < rows && this.isDark(y + dy, x)) {
+            braille |= 1 << dy;
+          }
+        }
+        // 右列 4 个像素
+        for (let dy = 0; dy < 4; dy++) {
+          if (y + dy < rows && x + 1 < cols && this.isDark(y + dy, x + 1)) {
+            braille |= 1 << (4 + dy);
+          }
+        }
+        line += String.fromCharCode(brailleBase + braille);
+      }
+      result += line + '\n';
+    }
+
+    return result.trimEnd();
+  }
+
+  /**
+   * 带颜色的终端输出（使用 ANSI 转义序列）
+   * @param fgColor - 前景色（深色模块颜色），支持 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white' 或 RGB
+   * @param bgColor - 背景色（浅色模块颜色）
+   * @returns 带 ANSI 颜色的终端字符画
+   */
+  toTerminalColor(fgColor = 'black', bgColor = 'white'): string {
+    const fgCode = this.getAnsiColorCode(fgColor, false);
+    const bgCode = this.getAnsiColorCode(bgColor, true);
+    const reset = '\x1b[0m';
+
+    let result = `${bgCode}${fgCode}`;
+
+    for (let row = 0; row < this.moduleCount; row++) {
+      for (let col = 0; col < this.moduleCount; col++) {
+        if (this.isDark(row, col)) {
+          result += '██';
+        } else {
+          result += '  ';
+        }
+      }
+      if (row < this.moduleCount - 1) {
+        result += '\n';
+      }
+    }
+
+    result += reset;
+    return result;
+  }
+
+  private getAnsiColorCode(color: string, isBackground: boolean): string {
+    const colorMap: Record<string, number> = {
+      black: 30, red: 31, green: 32, yellow: 33,
+      blue: 34, magenta: 35, cyan: 36, white: 37
+    };
+
+    const baseCode = colorMap[color.toLowerCase()] ?? 37;
+    return `\x1b[${isBackground ? baseCode + 10 : baseCode}m`;
+  }
+
   private createPNGBuffer(size: number): Uint8Array {
     const cellSize = Math.floor(size / this.moduleCount);
     const actualSize = cellSize * this.moduleCount;

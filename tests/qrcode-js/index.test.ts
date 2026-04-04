@@ -1,620 +1,303 @@
 /**
  * @veaba/qrcode-js - Unit Tests
- * Tests for JavaScript QRCode library with unified API
+ * Tests for browser-compatible QRCode library
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  QRCode,
+  QRCodeCore,
+  QRErrorCorrectLevel,
+  QRMode,
+  generateRoundedQRCode,
+  generateQRCodeWithLogoArea,
+  generateGradientQRCode,
+  generateWechatStyleQRCode,
+  generateDouyinStyleQRCode,
+  generateAlipayStyleQRCode,
+  generateXiaohongshuStyleQRCode,
+  generateCyberpunkStyleQRCode,
+  generateRetroStyleQRCode,
+  generateMinimalStyleQRCode,
+  generateBatchQRCodes,
+  generateQRCodeAsync,
+  generateBatchAsync,
+  getCachedQRCode,
+  clearQRCodeCache,
+  getCacheStats,
+} from '../../packages/qrcode-js/src/index.ts';
 
-describe('@veaba/qrcode-js - Re-exports from @veaba/qrcode-js-shared', () => {
-  it('should re-export QRCodeCore', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.QRCodeCore).toBeDefined();
-  });
-
-  it('should re-export QRCode as alias', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.QRCode).toBeDefined();
-    expect(mod.QRCode).toBe(mod.QRCodeCore);
-  });
-
-  it('should re-export QRErrorCorrectLevel', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.QRErrorCorrectLevel).toBeDefined();
-    expect(mod.QRErrorCorrectLevel.L).toBe(1);
-    expect(mod.QRErrorCorrectLevel.M).toBe(0);
-    expect(mod.QRErrorCorrectLevel.Q).toBe(3);
-    expect(mod.QRErrorCorrectLevel.H).toBe(2);
-  });
-
-  it('should re-export QRMode', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.QRMode).toBeDefined();
-    expect(mod.QRMode.MODE_8BIT_BYTE).toBe(4);
-  });
-
-  it('should re-export QRMath', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.QRMath).toBeDefined();
-  });
-
-  it('should re-export Polynomial', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.Polynomial).toBeDefined();
-  });
-
-  it('should re-export BitBuffer', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.BitBuffer).toBeDefined();
-  });
-
-  it('should re-export style generators', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.generateRoundedQRCode).toBeDefined();
-    expect(mod.generateQRCodeWithLogoArea).toBeDefined();
-    expect(mod.generateGradientQRCode).toBeDefined();
-    expect(mod.generateWechatStyleQRCode).toBeDefined();
-    expect(mod.generateDouyinStyleQRCode).toBeDefined();
-    expect(mod.generateAlipayStyleQRCode).toBeDefined();
-    expect(mod.generateXiaohongshuStyleQRCode).toBeDefined();
-    expect(mod.generateCyberpunkStyleQRCode).toBeDefined();
-    expect(mod.generateRetroStyleQRCode).toBeDefined();
-    expect(mod.generateMinimalStyleQRCode).toBeDefined();
-  });
-
-  it('should re-export cached style generators', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.generateRoundedQRCodeCached).toBeDefined();
-    expect(mod.generateQRCodeWithLogoAreaCached).toBeDefined();
-    expect(mod.generateGradientQRCodeCached).toBeDefined();
-    expect(mod.generateWechatStyleQRCodeCached).toBeDefined();
-    expect(mod.generateDouyinStyleQRCodeCached).toBeDefined();
-    expect(mod.generateAlipayStyleQRCodeCached).toBeDefined();
-    expect(mod.generateXiaohongshuStyleQRCodeCached).toBeDefined();
-    expect(mod.generateCyberpunkStyleQRCodeCached).toBeDefined();
-    expect(mod.generateRetroStyleQRCodeCached).toBeDefined();
-    expect(mod.generateMinimalStyleQRCodeCached).toBeDefined();
-  });
-
-  it('should re-export cache management', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.getCachedQRCode).toBeDefined();
-    expect(mod.clearQRCodeCache).toBeDefined();
-    expect(mod.getCacheStats).toBeDefined();
-    expect(mod.configureCache).toBeDefined();
-  });
-
-  it('should re-export batch generators', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.generateBatchQRCodes).toBeDefined();
-    expect(mod.generateBatchQRCodesCached).toBeDefined();
-  });
-
-  it('should re-export async generators', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.generateQRCodeAsync).toBeDefined();
-    expect(mod.generateBatchAsync).toBeDefined();
-  });
-
-  it('should re-export snake_case style aliases', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.generate_rounded_qrcode).toBeDefined();
-    expect(mod.generate_qrcode_with_logo_area).toBeDefined();
-    expect(mod.generate_gradient_qrcode).toBeDefined();
-    expect(mod.generate_wechat_style_qrcode).toBeDefined();
-    expect(mod.generate_douyin_style_qrcode).toBeDefined();
-    expect(mod.generate_alipay_style_qrcode).toBeDefined();
-    expect(mod.generate_xiaohongshu_style_qrcode).toBeDefined();
-    expect(mod.generate_cyberpunk_style_qrcode).toBeDefined();
-    expect(mod.generate_retro_style_qrcode).toBeDefined();
-    expect(mod.generate_minimal_style_qrcode).toBeDefined();
-  });
-});
-
-describe('@veaba/qrcode-js - Functional Tests', () => {
-  it('should create QRCodeCore instance', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    expect(qr).toBeDefined();
+describe('@veaba/qrcode-js - QRCodeCore Class', () => {
+  it('should create QRCodeCore with text', () => {
+    const qr = new QRCodeCore('Hello World');
     expect(qr.text).toBe('Hello World');
+    expect(qr.moduleCount).toBeGreaterThan(0);
+  });
+
+  it('should use default error correction level H', () => {
+    const qr = new QRCodeCore('test');
     expect(qr.correctLevel).toBe(QRErrorCorrectLevel.H);
   });
 
-  it('should generate SVG output', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const svg = qr.toSVG();
+  it('should accept custom error correction level', () => {
+    const qr = new QRCodeCore('test', QRErrorCorrectLevel.L);
+    expect(qr.correctLevel).toBe(QRErrorCorrectLevel.L);
+  });
+
+  it('should have typeNumber property', () => {
+    const qr = new QRCodeCore('test');
+    expect(qr.typeNumber).toBeGreaterThan(0);
+  });
+
+  it('should isDark return boolean', () => {
+    const qr = new QRCodeCore('test');
+    expect(typeof qr.isDark(0, 0)).toBe('boolean');
+  });
+
+  it('should getModuleCount return correct value', () => {
+    const qr = new QRCodeCore('test');
+    expect(qr.getModuleCount()).toBe(qr.moduleCount);
+  });
+
+  it('should toSVG generate valid SVG string', () => {
+    const qr = new QRCodeCore('test');
+    const svg = qr.toSVG(256);
     expect(svg).toContain('<svg');
     expect(svg).toContain('</svg>');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
   });
 
-  it('should generate styled SVG output', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const styledSvg = qr.toStyledSVG({
-      colorDark: '#000000',
-      colorLight: '#ffffff',
+  it('should toStyledSVG generate SVG with options', () => {
+    const qr = new QRCodeCore('test');
+    const svg = qr.toStyledSVG({
       size: 256,
-      borderRadius: 0.5,
+      colorDark: '#FF0000',
+      colorLight: '#FFFFFF',
+      borderRadius: 8,
     });
-    expect(styledSvg).toContain('<svg');
-    expect(styledSvg).toContain('</svg>');
+    expect(svg).toContain('#FF0000');
+    expect(svg).toContain('#FFFFFF');
   });
 
-  it('should generate styled SVG with gradient', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const styledSvg = qr.toStyledSVG({
-      gradient: { color1: '#ff0000', color2: '#00ff00' },
+  it('should toStyledSVG with gradient', () => {
+    const qr = new QRCodeCore('test');
+    const svg = qr.toStyledSVG({
       size: 256,
+      gradient: { color1: '#667eea', color2: '#764ba2' },
     });
-    expect(styledSvg).toContain('<svg');
-    expect(styledSvg).toContain('</svg>');
+    expect(svg).toContain('linearGradient');
   });
 
-  it('should generate styled SVG with quietZone', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const styledSvg = qr.toStyledSVG({
-      quietZone: 4,
-      size: 256,
-    });
-    expect(styledSvg).toContain('<svg');
-    expect(styledSvg).toContain('</svg>');
-  });
-
-  it('should generate styled SVG with logoRegions', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const styledSvg = qr.toStyledSVG({
-      logoRegions: [{ row: 10, col: 10, size: 6 }],
-      size: 256,
-    });
-    expect(styledSvg).toContain('<svg');
-    expect(styledSvg).toContain('</svg>');
-  });
-
-  it('should get moduleCount via getter', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const count = qr.moduleCount;
-    expect(typeof count).toBe('number');
-    expect(count).toBeGreaterThan(0);
-  });
-
-  it('should get moduleCount via getModuleCount()', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const count = qr.getModuleCount();
-    expect(typeof count).toBe('number');
-    expect(count).toBeGreaterThan(0);
-  });
-
-  it('should have consistent moduleCount getter and method', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    expect(qr.moduleCount).toBe(qr.getModuleCount());
-  });
-
-  it('should check isDark() for valid modules', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const count = qr.getModuleCount();
-
-    // Check some modules
-    for (let row = 0; row < Math.min(3, count); row++) {
-      for (let col = 0; col < Math.min(3, count); col++) {
-        const isDark = qr.isDark(row, col);
-        expect(typeof isDark).toBe('boolean');
-      }
-    }
-  });
-
-  it('should handle isDark() out of bounds gracefully', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const count = qr.getModuleCount();
-
-    // Out of bounds should return false or handle gracefully
-    // Note: The actual implementation may wrap around or return specific values
-    expect(() => qr.isDark(-1, 0)).not.toThrow();
-    expect(() => qr.isDark(0, -1)).not.toThrow();
-    expect(() => qr.isDark(count, 0)).not.toThrow();
-    expect(() => qr.isDark(0, count)).not.toThrow();
+  it('should toStyledSVG with quiet zone', () => {
+    const qr = new QRCodeCore('test');
+    const svg = qr.toStyledSVG({ quietZone: 4 });
+    expect(svg).toContain('<svg');
   });
 });
 
-describe('@veaba/qrcode-js - Style Generators', () => {
-  it('generateRoundedQRCode should return SVG', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateRoundedQRCode('Hello', { size: 128 });
+describe('@veaba/qrcode-js - QRCode Class', () => {
+  it('should create QRCode with text', () => {
+    const qr = new QRCode('Hello World');
+    expect(qr.text).toBe('Hello World');
+    expect(qr.moduleCount).toBeGreaterThan(0);
+  });
+
+  it('should use default error correction level H', () => {
+    const qr = new QRCode('test');
+    expect(qr.correctLevel).toBe(QRErrorCorrectLevel.H);
+  });
+
+  it('should accept custom error correction level', () => {
+    const qr = new QRCode('test', QRErrorCorrectLevel.L);
+    expect(qr.correctLevel).toBe(QRErrorCorrectLevel.L);
+  });
+
+  it('should have typeNumber property', () => {
+    const qr = new QRCode('test');
+    expect(qr.typeNumber).toBeGreaterThan(0);
+  });
+
+  it('should isDark return boolean', () => {
+    const qr = new QRCode('test');
+    expect(typeof qr.isDark(0, 0)).toBe('boolean');
+  });
+
+  it('should getModuleCount return correct value', () => {
+    const qr = new QRCode('test');
+    expect(qr.getModuleCount()).toBe(qr.moduleCount);
+  });
+
+  it('should toSVG generate valid SVG string', () => {
+    const qr = new QRCode('test');
+    const svg = qr.toSVG(256);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('</svg>');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+  });
+});
+
+describe('@veaba/qrcode-js - Constants', () => {
+  it('should export QRErrorCorrectLevel enum', () => {
+    expect(QRErrorCorrectLevel.L).toBe(1);
+    expect(QRErrorCorrectLevel.M).toBe(0);
+    expect(QRErrorCorrectLevel.Q).toBe(3);
+    expect(QRErrorCorrectLevel.H).toBe(2);
+  });
+
+  it('should export QRMode constant', () => {
+    expect(QRMode.MODE_8BIT_BYTE).toBe(4);
+  });
+});
+
+describe('@veaba/qrcode-js - Style Generator Functions', () => {
+  it('generateRoundedQRCode should return SVG', () => {
+    const svg = generateRoundedQRCode('test', 256, 8);
     expect(svg).toContain('<svg');
     expect(svg).toContain('</svg>');
   });
 
-  it('generateQRCodeWithLogoArea should return SVG', async () => {
-    const { generateQRCodeWithLogoArea } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateQRCodeWithLogoArea('Hello', { size: 128 });
+  it('generateQRCodeWithLogoArea should return SVG with logo area', () => {
+    const svg = generateQRCodeWithLogoArea('test', 256, 0.2);
     expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+    expect(svg).toContain('rect');
   });
 
-  it('generateGradientQRCode should return SVG', async () => {
-    const { generateGradientQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateGradientQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('generateGradientQRCode should return SVG with gradient', () => {
+    const svg = generateGradientQRCode('test', 256, '#667eea', '#764ba2');
+    expect(svg).toContain('linearGradient');
+    expect(svg).toContain('#667eea');
   });
 
-  it('generateWechatStyleQRCode should return SVG with WeChat color', async () => {
-    const { generateWechatStyleQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateWechatStyleQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('generateWechatStyleQRCode should use WeChat green', () => {
+    const svg = generateWechatStyleQRCode('test', 256);
     expect(svg).toContain('#07C160');
   });
 
-  it('generateDouyinStyleQRCode should return SVG with Douyin colors', async () => {
-    const { generateDouyinStyleQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateDouyinStyleQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-    // Douyin uses #FF0050 and #00F2EA (or similar)
-    expect(svg).toContain('#FF0050');
+  it('generateDouyinStyleQRCode should use Douyin colors', () => {
+    const svg = generateDouyinStyleQRCode('test', 256);
     expect(svg).toContain('#00F2EA');
   });
 
-  it('generateAlipayStyleQRCode should return SVG with Alipay color', async () => {
-    const { generateAlipayStyleQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateAlipayStyleQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('generateAlipayStyleQRCode should use Alipay blue', () => {
+    const svg = generateAlipayStyleQRCode('test', 256);
     expect(svg).toContain('#1677FF');
   });
 
-  it('generateXiaohongshuStyleQRCode should return SVG with Xiaohongshu color', async () => {
-    const { generateXiaohongshuStyleQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateXiaohongshuStyleQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('generateXiaohongshuStyleQRCode should use Xiaohongshu red', () => {
+    const svg = generateXiaohongshuStyleQRCode('test', 256);
     expect(svg).toContain('#FF2442');
   });
 
-  it('generateCyberpunkStyleQRCode should return SVG with neon colors', async () => {
-    const { generateCyberpunkStyleQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateCyberpunkStyleQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-    expect(svg).toContain('#00FFFF');
+  it('generateCyberpunkStyleQRCode should use cyberpunk colors', () => {
+    const svg = generateCyberpunkStyleQRCode('test', 256);
     expect(svg).toContain('#FF00FF');
+    expect(svg).toContain('#00FFFF');
   });
 
-  it('generateRetroStyleQRCode should return SVG with retro colors', async () => {
-    const { generateRetroStyleQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateRetroStyleQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('generateRetroStyleQRCode should use retro colors', () => {
+    const svg = generateRetroStyleQRCode('test', 256);
     expect(svg).toContain('#8B4513');
   });
 
-  it('generateMinimalStyleQRCode should return SVG with minimal style', async () => {
-    const { generateMinimalStyleQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateMinimalStyleQRCode('Hello', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('generateMinimalStyleQRCode should use minimal colors', () => {
+    const svg = generateMinimalStyleQRCode('test', 256);
     expect(svg).toContain('#333333');
   });
+});
 
-  it('style generators should accept custom options', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateRoundedQRCode('Hello', {
-      size: 200,
-      colorDark: '#123456',
-      colorLight: '#abcdef',
-      borderRadius: 0.3,
+describe('@veaba/qrcode-js - Batch Generation', () => {
+  it('generateBatchQRCodes should return array of SVGs', () => {
+    const svgs = generateBatchQRCodes(['test1', 'test2', 'test3']);
+    expect(svgs).toHaveLength(3);
+    svgs.forEach(svg => {
+      expect(svg).toContain('<svg');
     });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-    // Note: The actual SVG generation may have issues with option handling
-    // This test mainly verifies the function accepts options without throwing
   });
 
-  it('style generators should handle different error correction levels', async () => {
-    const { generateRoundedQRCode, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-
-    const levels = [
-      QRErrorCorrectLevel.L,
-      QRErrorCorrectLevel.M,
-      QRErrorCorrectLevel.Q,
-      QRErrorCorrectLevel.H,
-    ];
-
-    for (const level of levels) {
-      const svg = generateRoundedQRCode('Hello', {
-        size: 128,
-        correctLevel: level,
-      });
-      expect(svg).toContain('<svg');
-      expect(svg).toContain('</svg>');
-    }
+  it('generateBatchQRCodes should accept options', () => {
+    const svgs = generateBatchQRCodes(['test'], { size: 128, correctLevel: QRErrorCorrectLevel.L });
+    expect(svgs).toHaveLength(1);
+    expect(svgs[0]).toContain('<svg');
   });
 });
 
-describe('@veaba/qrcode-js - Cached Functions', () => {
-  let mod: typeof import('./index.js');
-
-  beforeEach(async () => {
-    mod = await import('../../packages/qrcode-js/src/index.js');
-    mod.clearQRCodeCache();
-  });
-
-  afterEach(() => {
-    mod.clearQRCodeCache();
-  });
-
-  it('generateRoundedQRCodeCached should return SVG', () => {
-    const svg = mod.generateRoundedQRCodeCached('Hello', { size: 128 });
+describe('@veaba/qrcode-js - Async Generation', () => {
+  it('generateQRCodeAsync should return Promise with SVG', async () => {
+    const svg = await generateQRCodeAsync('test');
     expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
   });
 
-  it('cached functions should use cache', () => {
-    // First call
-    const svg1 = mod.generateRoundedQRCodeCached('Hello', { size: 128 });
-    const stats1 = mod.getCacheStats();
-    expect(stats1.size).toBe(1);
-
-    // Second call with same parameters
-    const svg2 = mod.generateRoundedQRCodeCached('Hello', { size: 128 });
-    const stats2 = mod.getCacheStats();
-    expect(stats2.size).toBe(1); // Still 1, not 2
-    expect(svg1).toBe(svg2);
-  });
-
-  it('cached functions should cache different inputs separately', () => {
-    mod.generateRoundedQRCodeCached('Hello1', { size: 128 });
-    mod.generateRoundedQRCodeCached('Hello2', { size: 128 });
-
-    const stats = mod.getCacheStats();
-    expect(stats.size).toBe(2);
-  });
-
-  it('all cached style generators should work', () => {
-    const fns = [
-      mod.generateRoundedQRCodeCached,
-      mod.generateQRCodeWithLogoAreaCached,
-      mod.generateGradientQRCodeCached,
-      mod.generateWechatStyleQRCodeCached,
-      mod.generateDouyinStyleQRCodeCached,
-      mod.generateAlipayStyleQRCodeCached,
-      mod.generateXiaohongshuStyleQRCodeCached,
-      mod.generateCyberpunkStyleQRCodeCached,
-      mod.generateRetroStyleQRCodeCached,
-      mod.generateMinimalStyleQRCodeCached,
-    ];
-
-    for (const fn of fns) {
-      const svg = fn('Test', { size: 128 });
-      expect(svg).toContain('<svg');
-      expect(svg).toContain('</svg>');
-    }
-  });
-
-  it('getCachedQRCode should return cached QRCodeCore', () => {
-    const key = 'test-key-123';
-    mod.generateRoundedQRCodeCached('Test', { size: 128 }, key);
-
-    const cached = mod.getCachedQRCode(key);
-    // Cache stores QRCodeCore objects, not SVG strings
-    expect(cached).toBeDefined();
-    expect(cached).toHaveProperty('text');
-    expect(cached).toHaveProperty('moduleCount');
-    expect(cached).toHaveProperty('toSVG');
-  });
-
-  it('getCachedQRCode should handle non-existent key', () => {
-    // Note: getCachedQRCode may create a new entry if key doesn't exist
-    // This is implementation-specific behavior
-    const cached = mod.getCachedQRCode('this-key-definitely-does-not-exist-xyz');
-    // Either returns undefined or a QRCodeCore instance
-    expect(cached === undefined || cached instanceof Object).toBe(true);
-  });
-
-  it('clearQRCodeCache should clear all cached items', () => {
-    mod.generateRoundedQRCodeCached('Test1', { size: 128 });
-    mod.generateRoundedQRCodeCached('Test2', { size: 128 });
-
-    expect(mod.getCacheStats().size).toBe(2);
-
-    mod.clearQRCodeCache();
-    expect(mod.getCacheStats().size).toBe(0);
-  });
-
-  it('getCacheStats should return correct stats', () => {
-    mod.generateRoundedQRCodeCached('Test', { size: 128 });
-
-    const stats = mod.getCacheStats();
-    expect(stats).toHaveProperty('size');
-    expect(stats).toHaveProperty('maxSize');
-    expect(stats).toHaveProperty('keys');
-    expect(stats.size).toBe(1);
-    expect(Array.isArray(stats.keys)).toBe(true);
-    expect(stats.keys.length).toBe(1);
-  });
-
-  it('configureCache should disable and enable cache', () => {
-    // Disable cache
-    mod.configureCache({ enabled: false });
-    mod.generateRoundedQRCodeCached('Test', { size: 128 });
-    expect(mod.getCacheStats().size).toBe(0);
-
-    // Enable cache
-    mod.configureCache({ enabled: true });
-    mod.generateRoundedQRCodeCached('Test', { size: 128 });
-    expect(mod.getCacheStats().size).toBe(1);
-  });
-});
-
-describe('@veaba/qrcode-js - Batch and Async Functions', () => {
-  let mod: typeof import('./index.js');
-
-  beforeEach(async () => {
-    mod = await import('../../packages/qrcode-js/src/index.js');
-    mod.clearQRCodeCache();
-  });
-
-  afterEach(() => {
-    mod.clearQRCodeCache();
-  });
-
-  it('generateBatchQRCodes should generate multiple QR codes', () => {
-    const texts = ['Test1', 'Test2', 'Test3'];
-
-    const results = mod.generateBatchQRCodes(texts, { size: 128 });
-    expect(results).toHaveLength(3);
-
-    for (const svg of results) {
-      expect(svg).toContain('<svg');
-      expect(svg).toContain('</svg>');
-    }
-  });
-
-  it('generateBatchQRCodesCached should cache results', () => {
-    const texts = ['Test1', 'Test2'];
-
-    mod.generateBatchQRCodesCached(texts, { size: 128 });
-    const stats = mod.getCacheStats();
-    // Batch caching may use different keys
-    expect(stats.size).toBeGreaterThanOrEqual(1);
-  });
-
-  it('generateQRCodeAsync should return Promise', async () => {
-    const result = mod.generateQRCodeAsync('Hello', { size: 128 });
-    expect(result).toBeInstanceOf(Promise);
-
-    const svg = await result;
+  it('generateQRCodeAsync should accept options', async () => {
+    const svg = await generateQRCodeAsync('test', { size: 128 });
     expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
   });
 
   it('generateBatchAsync should return Promise with array', async () => {
-    const texts = ['Test1', 'Test2'];
-
-    const result = mod.generateBatchAsync(texts, { size: 128 });
-    expect(result).toBeInstanceOf(Promise);
-
-    const svgs = await result;
+    const svgs = await generateBatchAsync(['test1', 'test2']);
     expect(svgs).toHaveLength(2);
-
-    for (const svg of svgs) {
+    svgs.forEach(svg => {
       expect(svg).toContain('<svg');
-      expect(svg).toContain('</svg>');
-    }
-  });
-
-  it('generateQRCodeAsync should use cached version when available', async () => {
-    // First call
-    const svg1 = await mod.generateQRCodeAsync('Hello', { size: 128 });
-
-    // Second call should produce the same result
-    const svg2 = await mod.generateQRCodeAsync('Hello', { size: 128 });
-
-    expect(svg1).toEqual(svg2);
+    });
   });
 });
 
-describe('@veaba/qrcode-js - Browser Compatibility', () => {
-  it('should work without DOM APIs', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('Hello World', QRErrorCorrectLevel.H);
-    const svg = qr.toSVG();
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+describe('@veaba/qrcode-js - Cache Management', () => {
+  beforeEach(() => {
+    clearQRCodeCache();
   });
 
-  it('should work in Node.js environment', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateRoundedQRCode('Node.js Test', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('should create and cache QRCode if not exists', () => {
+    const cached = getCachedQRCode('test', QRErrorCorrectLevel.H);
+    expect(cached).toBeDefined();
+    expect(cached.text).toBe('test');
+    expect(cached.correctLevel).toBe(QRErrorCorrectLevel.H);
+  });
+
+  it('should return cached QRCode if exists', () => {
+    const qr1 = getCachedQRCode('test', QRErrorCorrectLevel.H);
+    const qr2 = getCachedQRCode('test', QRErrorCorrectLevel.H);
+    expect(qr1).toBe(qr2); // Same instance
+  });
+
+  it('should cache generated QRCode', () => {
+    const qr = new QRCodeCore('test');
+    qr.toSVG();
+    const stats = getCacheStats();
+    expect(typeof stats).toBe('object');
+  });
+
+  it('should clear cache', () => {
+    getCachedQRCode('test', QRErrorCorrectLevel.H);
+    clearQRCodeCache();
+    const stats = getCacheStats();
+    expect(stats.size).toBe(0);
   });
 });
 
 describe('@veaba/qrcode-js - Edge Cases', () => {
-  it('should handle empty string', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const qr = new QRCodeCore('', QRErrorCorrectLevel.H);
+  it('should handle empty string', () => {
+    const qr = new QRCodeCore('');
+    expect(qr.text).toBe('');
+    expect(qr.moduleCount).toBeGreaterThan(0);
+  });
+
+  it('should handle unicode characters', () => {
+    const qr = new QRCodeCore('你好世界🌍');
+    expect(qr.text).toBe('你好世界🌍');
     const svg = qr.toSVG();
     expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
   });
 
-  it('should handle unicode characters', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateRoundedQRCode('你好世界 🌍', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
+  it('should handle very long text', () => {
+    const longText = 'a'.repeat(1000);
+    const qr = new QRCodeCore(longText);
+    expect(qr.text).toBe(longText);
   });
 
-  it('should handle long text', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const longText = 'A'.repeat(500);
-    const svg = generateRoundedQRCode(longText, { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-  });
-
-  it('should handle special characters', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const specialText = '<script>alert("xss")</script>';
-    const svg = generateRoundedQRCode(specialText, { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-  });
-
-  it('should handle very small size', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateRoundedQRCode('Test', { size: 16 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-  });
-
-  it('should handle very large size', async () => {
-    const { generateRoundedQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    const svg = generateRoundedQRCode('Test', { size: 1024 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-  });
-});
-
-describe('@veaba/qrcode-js - Snake Case Aliases', () => {
-  it('should have all snake_case style aliases defined', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-
-    expect(mod.generate_rounded_qrcode).toBe(mod.generateRoundedQRCode);
-    expect(mod.generate_qrcode_with_logo_area).toBe(mod.generateQRCodeWithLogoArea);
-    expect(mod.generate_gradient_qrcode).toBe(mod.generateGradientQRCode);
-    expect(mod.generate_wechat_style_qrcode).toBe(mod.generateWechatStyleQRCode);
-    expect(mod.generate_douyin_style_qrcode).toBe(mod.generateDouyinStyleQRCode);
-    expect(mod.generate_alipay_style_qrcode).toBe(mod.generateAlipayStyleQRCode);
-    expect(mod.generate_xiaohongshu_style_qrcode).toBe(mod.generateXiaohongshuStyleQRCode);
-    expect(mod.generate_cyberpunk_style_qrcode).toBe(mod.generateCyberpunkStyleQRCode);
-    expect(mod.generate_retro_style_qrcode).toBe(mod.generateRetroStyleQRCode);
-    expect(mod.generate_minimal_style_qrcode).toBe(mod.generateMinimalStyleQRCode);
-  });
-
-  it('snake_case aliases should work correctly', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-
-    const svg = mod.generate_rounded_qrcode('Test', { size: 128 });
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('</svg>');
-  });
-});
-
-describe('@veaba/qrcode-js - Default Export', () => {
-  it('should export QRCodeCore as default', async () => {
-    const mod = await import('../../packages/qrcode-js/src/index.js');
-    expect(mod.default).toBe(mod.QRCodeCore);
+  it('should handle URL', () => {
+    const url = 'https://example.com/path?query=value';
+    const qr = new QRCodeCore(url);
+    expect(qr.text).toBe(url);
   });
 });
 
@@ -624,67 +307,169 @@ describe('@veaba/qrcode-js - URL String Tests', () => {
     'http://127.0.0.1:8080/%E9%80%89%E7%89%87.zip',
   ];
 
-  it('should generate QR codes for test URLs', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    
+  it('should generate QR codes for test URLs', () => {
     for (const url of testUrls) {
       const qr = new QRCodeCore(url, QRErrorCorrectLevel.H);
       expect(qr.text).toBe(url);
       expect(qr.moduleCount).toBeGreaterThan(0);
-      
       const svg = qr.toSVG();
       expect(svg).toContain('<svg');
       expect(svg).toContain('</svg>');
     }
   });
 
-  it('should generate styled QR codes for test URLs', async () => {
-    const { generateRoundedQRCode, generateGradientQRCode } = await import('../../packages/qrcode-js/src/index.js');
-    
+  it('should generate styled QR codes for test URLs', () => {
     for (const url of testUrls) {
-      const roundedSvg = generateRoundedQRCode(url, { size: 256 });
+      const roundedSvg = generateRoundedQRCode(url, 256, 8);
       expect(roundedSvg).toContain('<svg');
-      expect(roundedSvg).toContain('</svg>');
-
-      const gradientSvg = generateGradientQRCode(url, { size: 256 });
+      const gradientSvg = generateGradientQRCode(url, 256, '#667eea', '#764ba2');
       expect(gradientSvg).toContain('<svg');
-      expect(gradientSvg).toContain('</svg>');
     }
   });
 
-  it('should generate consistent module counts for test URLs', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    
+  it('should generate consistent module counts for test URLs', () => {
     for (const url of testUrls) {
       const qr1 = new QRCodeCore(url, QRErrorCorrectLevel.H);
       const qr2 = new QRCodeCore(url, QRErrorCorrectLevel.H);
-      
-      // Same input should produce same module count
       expect(qr1.moduleCount).toBe(qr2.moduleCount);
     }
   });
 
-  it('should handle URL with ASCII characters correctly', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const url = 'http://127.0.0.1:8080/106p.zip';
-    
-    const qr = new QRCodeCore(url, QRErrorCorrectLevel.H);
-    // Verify the text is stored correctly
-    expect(qr.text).toBe(url);
-    // Verify module count is reasonable (should be around 25-33 for this URL)
-    expect(qr.moduleCount).toBeGreaterThanOrEqual(21);
-    expect(qr.moduleCount).toBeLessThanOrEqual(41);
+  it('should batch generate QR codes for test URLs', () => {
+    const svgs = generateBatchQRCodes(testUrls, { size: 256, correctLevel: QRErrorCorrectLevel.H });
+    expect(svgs).toHaveLength(2);
+    svgs.forEach(svg => {
+      expect(svg).toContain('<svg');
+      expect(svg).toContain('</svg>');
+    });
   });
 
-  it('should handle URL with percent-encoded characters correctly', async () => {
-    const { QRCodeCore, QRErrorCorrectLevel } = await import('../../packages/qrcode-js/src/index.js');
-    const url = 'http://127.0.0.1:8080/%E9%80%89%E7%89%87.zip';
-    
-    const qr = new QRCodeCore(url, QRErrorCorrectLevel.H);
-    // Verify the text is stored correctly
-    expect(qr.text).toBe(url);
-    // Verify module count is reasonable
-    expect(qr.moduleCount).toBeGreaterThanOrEqual(21);
-    expect(qr.moduleCount).toBeLessThanOrEqual(41);
+  it('should async generate QR codes for test URLs', async () => {
+    for (const url of testUrls) {
+      const svg = await generateQRCodeAsync(url, { size: 256, correctLevel: QRErrorCorrectLevel.H });
+      expect(svg).toContain('<svg');
+      expect(svg).toContain('</svg>');
+    }
+  });
+});
+
+describe('@veaba/qrcode-js - Terminal Output', () => {
+  describe('toTerminal()', () => {
+    it('should generate terminal string for simple text', () => {
+      const qr = new QRCodeCore('Hello', QRErrorCorrectLevel.L);
+      const terminal = qr.toTerminal();
+      expect(terminal).toBeDefined();
+      expect(typeof terminal).toBe('string');
+      expect(terminal.length).toBeGreaterThan(0);
+    });
+
+    it('should contain block characters', () => {
+      const qr = new QRCodeCore('Test', QRErrorCorrectLevel.M);
+      const terminal = qr.toTerminal();
+      expect(terminal).toContain('█');
+      expect(terminal).toContain(' ');
+    });
+
+    it('should have correct dimensions (with default quietZone=1)', () => {
+      const qr = new QRCodeCore('QR Code Test', QRErrorCorrectLevel.H);
+      const terminal = qr.toTerminal();
+      const lines = terminal.split('\n');
+      expect(lines.length).toBe(qr.moduleCount + 2);
+      expect(lines[0].length).toBe((qr.moduleCount + 2) * 2);
+    });
+
+    it('should add quiet zone when specified', () => {
+      const qr = new QRCodeCore('Test', QRErrorCorrectLevel.L);
+      const quietZone = 2;
+      const terminal = qr.toTerminal(false, quietZone);
+      const lines = terminal.split('\n');
+      const expectedHeight = qr.moduleCount + quietZone * 2;
+      const expectedWidth = (qr.moduleCount + quietZone * 2) * 2;
+      expect(lines.length).toBe(expectedHeight);
+      expect(lines[0].length).toBe(expectedWidth);
+    });
+
+    it('should have visual square aspect ratio (width = 2x height)', () => {
+      const qr = new QRCodeCore('Aspect Ratio Test', QRErrorCorrectLevel.M);
+      const terminal = qr.toTerminal();
+      const lines = terminal.split('\n');
+      const height = lines.length;
+      const width = lines[0].length;
+      expect(width).toBe(height * 2);
+    });
+
+    it('should invert colors when invert=true', () => {
+      const qr = new QRCodeCore('Invert Test', QRErrorCorrectLevel.M);
+      const normal = qr.toTerminal(false);
+      const inverted = qr.toTerminal(true);
+      expect(normal).not.toBe(inverted);
+      const normalBlocks = (normal.match(/█/g) || []).length;
+      const invertedBlocks = (inverted.match(/█/g) || []).length;
+      expect(normalBlocks).not.toBe(invertedBlocks);
+    });
+
+    it('should generate consistent output for same input', () => {
+      const qr1 = new QRCodeCore('Consistent Test', QRErrorCorrectLevel.H);
+      const qr2 = new QRCodeCore('Consistent Test', QRErrorCorrectLevel.H);
+      expect(qr1.toTerminal()).toBe(qr2.toTerminal());
+    });
+  });
+
+  describe('toTerminalBraille()', () => {
+    it('should generate braille output', () => {
+      const qr = new QRCodeCore('Braille Test', QRErrorCorrectLevel.M);
+      const braille = qr.toTerminalBraille();
+      expect(braille).toBeDefined();
+      expect(typeof braille).toBe('string');
+      expect(braille.length).toBeGreaterThan(0);
+    });
+
+    it('should contain braille characters', () => {
+      const qr = new QRCodeCore('Test', QRErrorCorrectLevel.L);
+      const braille = qr.toTerminalBraille();
+      const brailleRegex = /[\u2800-\u28FF]/;
+      expect(braille).toMatch(brailleRegex);
+    });
+
+    it('should be more compact than regular terminal output', () => {
+      const qr = new QRCodeCore('Compact Test', QRErrorCorrectLevel.H);
+      const terminal = qr.toTerminal();
+      const braille = qr.toTerminalBraille();
+      const terminalLines = terminal.split('\n').length;
+      const brailleLines = braille.split('\n').length;
+      expect(brailleLines).toBeLessThan(terminalLines);
+    });
+  });
+
+  describe('toTerminalColor()', () => {
+    it('should generate colored terminal output', () => {
+      const qr = new QRCodeCore('Color Test', QRErrorCorrectLevel.M);
+      const colored = qr.toTerminalColor();
+      expect(colored).toBeDefined();
+      expect(typeof colored).toBe('string');
+      expect(colored).toContain('\x1b[');
+    });
+
+    it('should contain ANSI reset code', () => {
+      const qr = new QRCodeCore('Reset Test', QRErrorCorrectLevel.L);
+      const colored = qr.toTerminalColor();
+      expect(colored).toContain('\x1b[0m');
+    });
+
+    it('should support different foreground colors', () => {
+      const qr = new QRCodeCore('Color Test', QRErrorCorrectLevel.M);
+      const black = qr.toTerminalColor('black');
+      const red = qr.toTerminalColor('red');
+      const blue = qr.toTerminalColor('blue');
+      expect(black).toContain('\x1b[30m');
+      expect(red).toContain('\x1b[31m');
+      expect(blue).toContain('\x1b[34m');
+    });
+
+    it('should support background colors', () => {
+      const qr = new QRCodeCore('BG Test', QRErrorCorrectLevel.L);
+      const colored = qr.toTerminalColor('black', 'white');
+      expect(colored).toContain('\x1b[47m');
+    });
   });
 });

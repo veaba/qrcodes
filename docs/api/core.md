@@ -203,6 +203,114 @@ for (let row = 0; row < count; row++) {
 }
 ```
 
+### toTerminal
+
+将 QRCode 渲染为终端可显示的字符画。每个模块使用 2 个字符宽度，以补偿终端字符的高宽比（约 2:1）。
+
+```typescript
+toTerminal(invert = false, quietZone = 1): string
+```
+
+#### 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `invert` | `boolean` | `false` | 是否反转颜色 |
+| `quietZone` | `number` | `1` | 静区大小（模块数） |
+
+#### 返回值
+
+`string` - 终端字符画字符串
+
+#### 示例
+
+```typescript
+const qr = new QRCodeCore('https://example.com');
+
+// 标准终端输出
+console.log(qr.toTerminal());
+
+// 反转颜色（白底黑字）
+console.log(qr.toTerminal(true));
+
+// 大静区
+console.log(qr.toTerminal(false, 3));
+```
+
+#### 输出示例
+
+```
+  ██████████████    ██████████████    ██████████████
+  ██          ██  ██  ██████  ██████  ██          ██
+  ██  ██████  ██      ████      ████  ██  ██████  ██
+  ██  ██████  ██        ████  ████    ██  ██████  ██
+  ██  ██████  ██  ██        ██████    ██  ██████  ██
+  ██          ██          ████████    ██          ██
+  ██████████████  ██  ██  ██  ██  ██  ██████████████
+```
+
+### toTerminalBraille
+
+使用 Braille 字符渲染更紧凑的终端二维码。每个 Braille 字符表示 2x4 像素（宽 x 高），输出高度约为标准终端的 1/4。
+
+```typescript
+toTerminalBraille(): string
+```
+
+#### 返回值
+
+`string` - Braille 字符画字符串
+
+#### 示例
+
+```typescript
+const qr = new QRCodeCore('https://example.com');
+console.log(qr.toTerminalBraille());
+```
+
+#### 输出示例
+
+```
+⠟⣝⠝⠏⡌⡒⢱⢮⠃⠟⣝⠝⠏
+⡇⡕⡅⠇⠟⠥⠔⠮⠍⡇⡕⡅⠇
+⣭⣕⢿⠅⡎⢪⣡⣄⠬⣹⡑⡡⠌
+```
+
+### toTerminalColor
+
+带颜色的终端输出（使用 ANSI 转义序列）。
+
+```typescript
+toTerminalColor(fgColor = 'black', bgColor = 'white'): string
+```
+
+#### 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `fgColor` | `string` | `'black'` | 前景色（深色模块颜色） |
+| `bgColor` | `string` | `'white'` | 背景色（浅色模块颜色） |
+
+#### 支持的颜色
+
+`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`
+
+#### 返回值
+
+`string` - 带 ANSI 颜色的终端字符画
+
+#### 示例
+
+```typescript
+const qr = new QRCodeCore('https://example.com');
+
+// 绿色前景
+console.log(qr.toTerminalColor('green'));
+
+// 蓝色前景，黄色背景
+console.log(qr.toTerminalColor('blue', 'yellow'));
+```
+
 ## 静态方法
 
 `QRCodeCore` 没有静态方法，但公开包提供了相关的工具函数（如 `generateBatchQRCodes`）。

@@ -22,6 +22,24 @@ qr.make_code("Hello World");
 let svg = qr.get_svg();
 ```
 
+### 终端输出
+
+```rust
+use qrcode_fast::{QRCode, QRErrorCorrectLevel};
+
+let mut qr = QRCode::with_options(QRErrorCorrectLevel::M);
+qr.make_code("https://example.com");
+
+// 标准终端输出
+println!("{}", qr.to_terminal(false, 1));
+
+// Braille 紧凑输出
+println!("{}", qr.to_terminal_braille());
+
+// 彩色终端输出
+println!("{}", qr.to_terminal_color("green", "white"));
+```
+
 ### 使用命令行工具
 
 工具已迁移到 `bench/rust-tools`：
@@ -31,6 +49,9 @@ cd bench/rust-tools
 
 # 生成并验证二维码
 cargo run --release --features validation --bin fast-qr -- "Hello World"
+
+# 终端输出演示
+cargo run --release --bin terminal_demo -- "Hello World"
 
 # 性能对比
 cargo run --release --bin compare-svgs -- "Hello World"
@@ -77,11 +98,35 @@ packages/qrcode-fast/
 | `src/bin/verify_kennytm.rs` | `bench/rust-tools/src/bin/verify_kennytm.rs` |
 | `src/bin/verified_qr.rs` | `bench/rust-tools/src/bin/verified_qr.rs` |
 | `src/bin/benchmark_report.rs` | `bench/rust-tools/src/bin/benchmark_report.rs` |
+| `src/bin/terminal_demo.rs` | `bench/rust-tools/src/bin/terminal_demo.rs` |
 | `src/validation.rs` | `bench/rust-tools/src/validation.rs` |
+
+## 🧪 测试说明
+
+包内的单元测试已迁移至 `bench/rust-tools`，使用集成测试工具运行：
+
+```bash
+cd ../../bench/rust-tools
+
+# 运行 qrcode-fast 集成测试
+cargo run --release --bin test_qrcode_fast
+```
+
+预期输出：
+```
+═══════════════════════════════════════
+  @veaba/qrcode-fast 集成测试套件
+═══════════════════════════════════════
+  通过：16
+  失败：0
+  总计：16
+✅ @veaba/qrcode-fast 所有测试通过！
+```
 
 ## 📝 历史迁移
 
 - **2026-02-06**: 删除 `examples/` 目录，其中 `generate_svg.rs` 为 mock 实现，`test_qrcode_fast.rs` 和 `test_ec.rs` 功能由 `bench/rust-tools` 覆盖，保持包目录干净。
+- **2026-04-05**: 删除包内 `#[cfg(test)]` 测试代码，迁移至 `bench/rust-tools/src/bin/test_qrcodes.rs` 统一测试。
 
 ## 📄 License
 

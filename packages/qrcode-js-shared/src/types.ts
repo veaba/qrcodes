@@ -68,7 +68,7 @@ export interface IQRCode {
   readonly typeNumber: number;
   /** 模块数量 */
   readonly moduleCount: number;
-  
+
   /** 检查指定位置是否为深色模块 */
   isDark(row: number, col: number): boolean;
   /** 获取模块数量 */
@@ -77,6 +77,12 @@ export interface IQRCode {
   toSVG(size?: number): string;
   /** 生成带样式的 SVG */
   toStyledSVG(options?: StyledSVGOptions): string;
+  /** 生成终端字符画 */
+  toTerminal(invert?: boolean, quietZone?: number): string;
+  /** 生成 Braille 终端字符画 */
+  toTerminalBraille(): string;
+  /** 生成彩色终端字符画 */
+  toTerminalColor(fgColor?: string, bgColor?: string): string;
 }
 
 // ============ 样式生成函数类型 ============

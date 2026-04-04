@@ -174,6 +174,38 @@ export class QRCodeCore {
     // Note: This is a simplified version
     return this.qr.get_svg();
   }
+
+  // ===== Terminal Output Methods =====
+
+  /**
+   * Render QRCode as terminal character art
+   * Each module uses 2 characters width to compensate for terminal char aspect ratio (~2:1)
+   * @param invert - Invert colors (default false)
+   * @param quietZone - Quiet zone size (default 1)
+   * @returns Terminal character art string
+   */
+  toTerminal(invert = false, quietZone = 1): string {
+    return this.qr.to_terminal(invert, quietZone);
+  }
+
+  /**
+   * Render QRCode using Braille characters for more compact terminal output
+   * Each character represents 2x4 pixels (width x height)
+   * @returns Braille character art string
+   */
+  toTerminalBraille(): string {
+    return this.qr.to_terminal_braille();
+  }
+
+  /**
+   * Colored terminal output using ANSI escape sequences
+   * @param fgColor - Foreground color (for dark modules)
+   * @param bgColor - Background color (for light modules)
+   * @returns Terminal character art with ANSI colors
+   */
+  toTerminalColor(fgColor = 'black', bgColor = 'white'): string {
+    return this.qr.to_terminal_color(fgColor, bgColor);
+  }
 }
 
 // Alias for compatibility

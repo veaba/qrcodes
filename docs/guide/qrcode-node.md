@@ -67,6 +67,59 @@ const largePng = qr.toPNG(512);
 fs.writeFileSync('qrcode.png', pngBuffer);
 ```
 
+### 终端输出
+
+在终端中直接显示二维码，支持多种渲染方式：
+
+```typescript
+const qr = new QRCode('https://example.com', QRErrorCorrectLevel.M);
+
+// 标准终端输出（使用 █ 字符）
+console.log(qr.toTerminal());
+
+// 反转颜色
+console.log(qr.toTerminal(true));
+
+// 大静区
+console.log(qr.toTerminal(false, 3));
+
+// Braille 紧凑输出（高度约为标准的 1/4）
+console.log(qr.toTerminalBraille());
+
+// 彩色输出（支持 8 种颜色）
+console.log(qr.toTerminalColor('green'));
+console.log(qr.toTerminalColor('blue', 'yellow')); // 前景 + 背景
+```
+
+#### 终端输出示例
+
+标准输出：
+```
+  ██████████████    ██████████████    ██████████████
+  ██          ██  ██  ██████  ██████  ██          ██
+  ██  ██████  ██      ████      ████  ██  ██████  ██
+  ██  ██████  ██        ████  ████    ██  ██████  ██
+  ██████████████  ██  ██  ██  ██  ██  ██████████████
+```
+
+Braille 输出：
+```
+⠟⣝⠝⠏⡌⡒⢱⢮⠃⠟⣝⠝⠏
+⡇⡕⡅⠇⠟⠥⠔⠮⠍⡇⡕⡅⠇
+⣭⣕⢿⠅⡎⢪⣡⣄⠬⣹⡑⡡⠌
+```
+
+#### 支持的颜色
+
+`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`
+
+#### 使用场景
+
+- 在 CI/CD 日志中显示二维码
+- TUI 应用中直接渲染
+- 快速预览二维码内容
+- 无需图形界面即可分享二维码
+
 ### 样式化 SVG
 
 ```typescript
@@ -263,6 +316,9 @@ console.log(`Generated: ${output}`);
 | `toSVG(size?)` | 生成 SVG | `size?: number` | `string` |
 | `toPNG(size?)` | 生成 PNG | `size?: number` | `Buffer` |
 | `toStyledSVG(options)` | 样式化 SVG | `options: StyledSVGOptions` | `string` |
+| `toTerminal(invert?, quietZone?)` | 终端输出 | `invert?: boolean`, `quietZone?: number` | `string` |
+| `toTerminalBraille()` | Braille 终端输出 | - | `string` |
+| `toTerminalColor(fg?, bg?)` | 彩色终端输出 | `fg?: string`, `bg?: string` | `string` |
 | `getModuleCount()` | 获取模块数 | - | `number` |
 | `isDark(row, col)` | 判断模块颜色 | `row: number`, `col: number` | `boolean` |
 

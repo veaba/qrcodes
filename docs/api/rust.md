@@ -165,6 +165,60 @@ let count = qr.get_module_count();
 // Version 2 = 25, Version 3 = 29, etc.
 ```
 
+### 终端输出方法（Terminal Output）
+
+#### `to_terminal(&self, invert: bool, quiet_zone: i32) -> String`
+
+将 QRCode 渲染为终端可显示的字符画。每个模块使用 2 个字符宽度，以补偿终端字符的高宽比。
+
+```rust
+use qrcode_rust::QRCode;
+
+let mut qr = QRCode::new();
+qr.make_code("Hello World");
+
+// 标准终端输出
+println!("{}", qr.to_terminal(false, 1));
+
+// 反转颜色
+println!("{}", qr.to_terminal(true, 1));
+
+// 大静区
+println!("{}", qr.to_terminal(false, 3));
+```
+
+#### `to_terminal_braille(&self) -> String`
+
+使用 Braille 字符渲染更紧凑的终端二维码。每个 Braille 字符表示 2x4 像素，输出高度约为标准的 1/4。
+
+```rust
+use qrcode_rust::QRCode;
+
+let mut qr = QRCode::new();
+qr.make_code("Hello World");
+
+println!("{}", qr.to_terminal_braille());
+```
+
+#### `to_terminal_color(&self, fg_color: &str, bg_color: &str) -> String`
+
+带颜色的终端输出（使用 ANSI 转义序列）。
+
+```rust
+use qrcode_rust::QRCode;
+
+let mut qr = QRCode::new();
+qr.make_code("Hello World");
+
+// 绿色前景
+println!("{}", qr.to_terminal_color("green", "white"));
+
+// 蓝色前景，黄色背景
+println!("{}", qr.to_terminal_color("blue", "yellow"));
+```
+
+支持的颜色：`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`
+
 ## QRCodeOptions
 
 ### qrcode-fast
@@ -225,6 +279,9 @@ let count = qr.get_module_count();
 |------|------|------|--------|
 | `new(text, correct_level)` | 创建实例 | `&str`, `QRErrorCorrectLevel` | `QRCodeNative` |
 | `to_svg(size)` | 生成 SVG | `i32` | `String` |
+| `to_terminal(invert, quiet_zone)` | 终端输出 | `bool`, `i32` | `String` |
+| `to_terminal_braille()` | Braille 终端 | - | `String` |
+| `to_terminal_color(fg, bg)` | 彩色终端 | `&str`, `&str` | `String` |
 | `is_dark(row, col)` | 检查模块颜色 | `i32`, `i32` | `bool` |
 | `get_module_count()` | 获取模块数 | - | `i32` |
 | `module_count()` | 同上 | - | `i32` |

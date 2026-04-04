@@ -103,7 +103,7 @@ use qrcode_rust::QRCode;
 
 fn render_to_console(qr: &QRCode) {
     let count = qr.get_module_count();
-    
+
     for row in 0..count {
         for col in 0..count {
             if qr.is_dark(row, col) {
@@ -121,6 +121,58 @@ fn main() {
     render_to_console(&qr);
 }
 ```
+
+### 终端输出（Terminal Output）
+
+```rust
+use qrcode_rust::{QRCode, QRErrorCorrectLevel};
+
+fn main() {
+    let mut qr = QRCode::new("https://example.com");
+
+    // 标准终端输出
+    println!("{}", qr.to_terminal(false, 1));
+
+    // 反转颜色
+    println!("{}", qr.to_terminal(true, 1));
+
+    // 大静区
+    println!("{}", qr.to_terminal(false, 3));
+
+    // Braille 紧凑输出
+    println!("{}", qr.to_terminal_braille());
+
+    // 彩色输出
+    println!("{}", qr.to_terminal_color("green", "white"));
+}
+```
+
+#### 终端输出示例
+
+标准输出：
+```
+  ██████████████    ██████████████    ██████████████
+  ██          ██  ██  ██████  ██████  ██          ██
+  ██  ██████  ██      ████      ████  ██  ██████  ██
+  ██████████████  ██  ██  ██  ██  ██  ██████████████
+```
+
+Braille 输出：
+```
+⠟⣝⠝⠏⡌⡒⢱⢮⠃⠟⣝⠝⠏
+⡇⡕⡅⠇⠟⠥⠔⠮⠍⡇⡕⡅⠇
+⣭⣕⢿⠅⡎⢪⣡⣄⠬⣹⡑⡡⠌
+```
+
+#### 支持的颜色
+
+`black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`
+
+#### 使用场景
+
+- 在 CI/CD 日志中显示二维码
+- TUI 应用中直接渲染
+- 快速预览二维码内容
 
 ## 批量生成
 
@@ -300,6 +352,20 @@ cd packages/qrcode-rust
 cargo bench --bench comparison_bench
 ```
 
+### 使用 bench/rust-tools
+
+使用 `bench/rust-tools` 进行验证和终端输出演示：
+
+```bash
+cd bench/rust-tools
+
+# 终端输出演示
+cargo run --release --bin terminal_demo -- "Hello World"
+
+# 验证生成结果
+cargo run --release --features validation --bin veaba-qr -- "Hello World"
+```
+
 预期结果（基于实际测试，2026-02-02）：
 
 ```
@@ -387,6 +453,9 @@ pub struct QRCode {
 | `get_modules()` | 获取模块数据 | `Option<&Vec<Vec<Option<bool>>>>` |
 | `is_dark(row, col)` | 判断模块颜色 | `bool` |
 | `get_svg()` | 获取 SVG | `String` |
+| `to_terminal(invert, quiet_zone)` | 终端输出 | `String` |
+| `to_terminal_braille()` | Braille 终端 | `String` |
+| `to_terminal_color(fg, bg)` | 彩色终端 | `String` |
 
 ### QRErrorCorrectLevel
 
