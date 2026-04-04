@@ -8,8 +8,14 @@ pub fn set_panic_hook() {
 #[allow(dead_code)]
 pub fn get_ansi_color_code(color: &str, is_background: bool) -> String {
     let color_map: &[(&str, u8)] = &[
-        ("black", 30), ("red", 31), ("green", 32), ("yellow", 33),
-        ("blue", 34), ("magenta", 35), ("cyan", 36), ("white", 37),
+        ("black", 30),
+        ("red", 31),
+        ("green", 32),
+        ("yellow", 33),
+        ("blue", 34),
+        ("magenta", 35),
+        ("cyan", 36),
+        ("white", 37),
     ];
 
     let base_code = color_map
@@ -18,6 +24,10 @@ pub fn get_ansi_color_code(color: &str, is_background: bool) -> String {
         .map(|(_, code)| *code)
         .unwrap_or(37);
 
-    let code = if is_background { base_code + 10 } else { base_code };
+    let code = if is_background {
+        base_code + 10
+    } else {
+        base_code
+    };
     format!("\x1b[{}m", code)
 }

@@ -142,7 +142,9 @@ fn main() {
         qr.make_code("Hello");
         let braille = qr.to_terminal_braille();
         assert!(
-            braille.chars().any(|c| ('\u{2800}'..='\u{28FF}').contains(&c)),
+            braille
+                .chars()
+                .any(|c| ('\u{2800}'..='\u{28FF}').contains(&c)),
             "Braille 输出应该包含 Braille 字符"
         );
     });
@@ -193,12 +195,17 @@ fn main() {
         let mut qr = QRCode::new();
         qr.make_code("Hello");
         let colored = qr.to_terminal_color("black", "white");
-        assert!(colored.contains("\x1b[0m") || colored.contains("[0m"), "彩色输出应该包含重置序列");
+        assert!(
+            colored.contains("\x1b[0m") || colored.contains("[0m"),
+            "彩色输出应该包含重置序列"
+        );
     });
     passed += 1;
 
     run_test("不同前景色", || {
-        let colors = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"];
+        let colors = [
+            "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+        ];
         for color in colors {
             let mut qr = QRCode::new();
             qr.make_code("Test");
@@ -209,7 +216,9 @@ fn main() {
     passed += 1;
 
     run_test("不同背景色", || {
-        let colors = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"];
+        let colors = [
+            "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+        ];
         for color in colors {
             let mut qr = QRCode::new();
             qr.make_code("Test");

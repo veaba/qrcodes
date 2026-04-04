@@ -106,7 +106,15 @@ fn main() {
     println!("═══════════════════════════════════════");
     println!("  信息摘要");
     println!("═══════════════════════════════════════");
-    println!("qrcode-fast 模块数：{}x{}", fast_qr.get_module_count(), fast_qr.get_module_count());
-    println!("qrcode-rust 模块数：{}x{}", rust_qr.get_module_count(), rust_qr.get_module_count());
+    println!(
+        "qrcode-fast 模块数：{}x{}",
+        fast_qr.get_module_count(),
+        fast_qr.get_module_count()
+    );
+    println!(
+        "qrcode-rust 模块数：{}x{}",
+        rust_qr.get_module_count(),
+        rust_qr.get_module_count()
+    );
     println!();
 }

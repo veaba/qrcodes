@@ -225,7 +225,10 @@ impl QRCode {
                 }
                 // 右列 4 个像素
                 for dy in 0..4 {
-                    if y + dy < rows && x + 1 < cols && self.is_dark((y + dy) as i32, (x + 1) as i32) {
+                    if y + dy < rows
+                        && x + 1 < cols
+                        && self.is_dark((y + dy) as i32, (x + 1) as i32)
+                    {
                         braille |= 1 << (4 + dy);
                     }
                 }

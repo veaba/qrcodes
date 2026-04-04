@@ -51,7 +51,8 @@
     "version:sync": "node scripts/sync-cargo-version.js",
     "ci:version": "changeset version && pnpm run version:sync && pnpm install",
     "ci:publish": "changeset publish",
-    "clippy": "cargo clippy --fix"
+    "clippy": "cargo clippy --fix",
+    "fmt:rust": "cargo fmt --all"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",

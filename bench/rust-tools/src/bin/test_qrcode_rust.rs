@@ -100,12 +100,22 @@ fn main() {
 
         for col in 8..count - 8 {
             let expected = col % 2 == 0;
-            assert_eq!(qr.is_dark(6, col), expected, "水平定时图案在 (6,{}) 不匹配", col);
+            assert_eq!(
+                qr.is_dark(6, col),
+                expected,
+                "水平定时图案在 (6,{}) 不匹配",
+                col
+            );
         }
 
         for row in 8..count - 8 {
             let expected = row % 2 == 0;
-            assert_eq!(qr.is_dark(row, 6), expected, "垂直定时图案在 ({},6) 不匹配", row);
+            assert_eq!(
+                qr.is_dark(row, 6),
+                expected,
+                "垂直定时图案在 ({},6) 不匹配",
+                row
+            );
         }
     });
     passed += 1;
@@ -117,7 +127,12 @@ fn main() {
 
     run_test("不同纠错级别", || {
         let test_data = "Hello World";
-        for level in [QRErrorCorrectLevel::L, QRErrorCorrectLevel::M, QRErrorCorrectLevel::Q, QRErrorCorrectLevel::H] {
+        for level in [
+            QRErrorCorrectLevel::L,
+            QRErrorCorrectLevel::M,
+            QRErrorCorrectLevel::Q,
+            QRErrorCorrectLevel::H,
+        ] {
             let mut qr = QRCode::with_options(QRCodeOptions {
                 width: 256,
                 height: 256,
@@ -126,14 +141,23 @@ fn main() {
                 correct_level: level,
             });
             qr.make_code(test_data);
-            assert!(qr.module_count > 0, "纠错级别 {:?} 应该生成有效的二维码", level);
+            assert!(
+                qr.module_count > 0,
+                "纠错级别 {:?} 应该生成有效的二维码",
+                level
+            );
         }
     });
     passed += 1;
 
     run_test("RS 块", || {
         use qrcode_rust::get_rs_blocks;
-        for level in [QRErrorCorrectLevel::L, QRErrorCorrectLevel::M, QRErrorCorrectLevel::Q, QRErrorCorrectLevel::H] {
+        for level in [
+            QRErrorCorrectLevel::L,
+            QRErrorCorrectLevel::M,
+            QRErrorCorrectLevel::Q,
+            QRErrorCorrectLevel::H,
+        ] {
             let blocks = get_rs_blocks(1, level);
             assert!(!blocks.is_empty(), "类型号 1 纠错级别应该有 RS 块");
             let blocks = get_rs_blocks(2, level);
@@ -293,7 +317,9 @@ fn main() {
         let braille = qr.to_terminal_braille();
         assert!(!braille.is_empty(), "Braille 输出不应该为空");
         assert!(
-            braille.chars().any(|c| ('\u{2800}'..='\u{28FF}').contains(&c)),
+            braille
+                .chars()
+                .any(|c| ('\u{2800}'..='\u{28FF}').contains(&c)),
             "Braille 输出应该包含 Braille 字符"
         );
     });
@@ -304,7 +330,10 @@ fn main() {
         qr.make_code("Hello");
         let colored = qr.to_terminal_color("black", "white");
         assert!(!colored.is_empty(), "彩色终端输出不应该为空");
-        assert!(colored.contains("\x1b["), "彩色终端输出应该包含 ANSI 转义序列");
+        assert!(
+            colored.contains("\x1b["),
+            "彩色终端输出应该包含 ANSI 转义序列"
+        );
     });
     passed += 1;
 
