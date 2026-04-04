@@ -24,9 +24,22 @@ export default defineConfig({
       // Use system Chrome/Chromium instead of downloading
       providerOptions: {
         launch: {
-          // In CI, use Playwright's bundled Chromium; locally, use system Chrome
+          // Auto-detect platform-specific Chrome executable path
           ...(process.env.CI ? {} : {
-            executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            executablePath: (() => {
+              const platform = process.platform;
+              if (platform === 'win32') {
+                // Windows Chrome paths (check both common locations)
+                return process.env.PROGRAMFILES
+                  ? `${process.env.PROGRAMFILES}\\Google\\Chrome\\Application\\chrome.exe`
+                  : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+              }
+              if (platform === 'darwin') {
+                return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+              }
+              // Linux - use chromium from PATH or let playwright handle it
+              return undefined;
+            })(),
           }),
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         },
