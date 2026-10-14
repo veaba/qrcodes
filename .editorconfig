@@ -1,0 +1,45 @@
+# EditorConfig — 跨编辑器的基础规范
+# https://editorconfig.org
+#
+# 配合 .gitattributes 使用：本文件管"编辑时"，.gitattributes 管"入库时"。
+
+root = true
+
+# 默认：UTF-8 + LF + 文件末尾换行
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Rust：4 空格（rustfmt 默认）
+[*.rs]
+indent_size = 4
+
+# TOML
+[*.toml]
+indent_size = 2
+
+# Markdown：不裁剪行尾空格（两个空格表示换行）
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+[*.mdx]
+trim_trailing_whitespace = false
+indent_size = 2
+
+# 锁文件与生成物：不约束格式
+[{pnpm-lock.yaml,Cargo.lock}]
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+# Windows 脚本
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# CI 配置
+[.github/workflows/*.{yml,yaml}]
+indent_size = 2

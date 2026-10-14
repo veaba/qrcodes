@@ -22,3 +22,8 @@ coverage
 pkg
 
 .omc
+
+docs/public/bench/benchmark-output
+
+# 五方 SVG 基准的人工验证产物（前缀区分实现、后缀 _<n> 为第 n 次生成的索引）
+docs/public/bench/svg

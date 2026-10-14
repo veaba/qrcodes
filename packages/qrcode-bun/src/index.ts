@@ -129,7 +129,7 @@ const PATTERN_POSITION_TABLE: ReadonlyArray<ReadonlyArray<number>> = [
   [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50], [6, 30, 54],
   [6, 32, 58], [6, 34, 62], [6, 26, 46, 66], [6, 26, 48, 70], [6, 26, 50, 74],
   [6, 30, 54, 78], [6, 30, 56, 82], [6, 30, 58, 86], [6, 34, 62, 90],
-  [6, 28, 50, 72, 94], [6, 28, 50, 72, 98], [6, 26, 50, 74, 98],
+  [6, 28, 50, 72, 94], [6, 26, 50, 74, 98],
   [6, 30, 54, 78, 102], [6, 28, 54, 80, 106], [6, 32, 58, 84, 110],
   [6, 30, 58, 86, 114], [6, 34, 62, 90, 118], [6, 26, 50, 74, 98, 122],
   [6, 30, 54, 78, 102, 126], [6, 26, 52, 78, 104, 130],
@@ -656,7 +656,33 @@ export class QRCode {
   }
 
   private setupTypeNumber(): void {
-    // 简化版本
+    // QR 版本信息：18 位 = 6 位版本号 + 12 位 BCH(18,6) 纠错码
+    // 生成多项式 G18 = 0x1F25（x^12+x^11+x^10+x^9+x^8+x^5+x^2+1）
+    //
+    // 仅 Version >= 7 需要写入（v1-v6 版本可由尺寸直接推断）。
+    // 此前这里是空实现，导致 v7+ 产物缺少版本信息，解码器无法判定版本，
+    // 表现为 rqrr 报 DataEcc 解码失败。
+    const G18 =
+      (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0);
+    let d = this.typeNumber << 12;
+
+    while (this.getBCHDigit(d) - this.getBCHDigit(G18) >= 0) {
+      d ^= G18 << (this.getBCHDigit(d) - this.getBCHDigit(G18));
+    }
+
+    const bits = (this.typeNumber << 12) | d;
+
+    // 18 位分两组，每组 3×6：
+    //   右上角区域 —— 行 = i/3，列 = moduleCount - 11 + (i%3)
+    //   左下角区域 —— 行 = moduleCount - 11 + (i%3)，列 = i/3
+    // 必须写入 0/1（而非保持 255），否则 mapData 会把数据位覆盖到这些格子上。
+    for (let i = 0; i < 18; i++) {
+      const dark = ((bits >> i) & 1) === 1 ? 1 : 0;
+      const r = Math.floor(i / 3);
+      const c = this.moduleCount - 11 + (i % 3);
+      this.modules[r][c] = dark;
+      this.modules[c][r] = dark;
+    }
   }
 
   private mapData(): void {

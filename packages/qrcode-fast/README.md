@@ -2,11 +2,11 @@
 
 > **高性能 Rust QRCode 生成库**
 >
-> 🔥 **比 kennytm/qrcode 快 3 倍！**
+> 🔥 **比 kennytm/qrcode 快 9-19 倍！**
 
 [![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Performance](https://img.shields.io/badge/Performance-3x%20faster-red.svg)]()
+[![Performance](https://img.shields.io/badge/Performance-9--19x%20faster-red.svg)]()
 
 ---
 
@@ -59,11 +59,25 @@ cargo run --release --bin compare-svgs -- "Hello World"
 
 ## 📊 性能
 
+端到端 SVG 生成，同机同进程 100 次取平均，产物经独立解码验证（Rust 1.89.0, release）：
+
 | 场景 | kennytm/qrcode | qrcode-fast | 速度比 |
 |------|----------------|-------------|--------|
-| 短文本 (11B) | ~16 µs | **~5 µs** | **3x** |
-| URL (36B) | ~32 µs | **~10 µs** | **3x** |
-| 长文本 (109B) | ~66 µs | **~20 µs** | **3x** |
+| Hello World (11B) | 210.4 µs | **18.5 µs** | **11.4x** |
+| Test QR Code 123 (17B) | 324.1 µs | **19.8 µs** | **16.2x** |
+| URL (31B) | 453.3 µs | **24.2 µs** | **18.8x** |
+| 长文本 (74B) | 826.2 µs | **64.4 µs** | **12.5x** |
+
+对比 `@veaba/qrcode-rust` 快 **1.5-2.2 倍**。
+
+> 权威数据：[`docs/public/benchmark_speedup_verified.json`](../../docs/public/benchmark_speedup_verified.json)
+> 复现：`cd bench/rust-tools && cargo run --release --bin verify-speedup`
+
+> ✅ **能力范围**：覆盖 **Version 1-40**，纠错级别 **H** 下**最大可解码长度 1273 字节**（QR 标准上限），
+> 与 `@veaba/qrcode-rust` 及 JS 实现一致。产物经 resvg 渲染 + rqrr **独立解码**验证，实例复用同样正常工作。
+> 历史上曾因 `get_min_version` 的 `take(10)` 与对齐图案坐标表缺陷导致长文本不可解码，**均已修复**（见
+> [`docs/public/benchmark_speedup_verified.json`](../../docs/public/benchmark_speedup_verified.json) 的 `fixed_defects`）。
+> 复现：`cd bench/rust-tools && cargo run --release --features validation --bin scan-max`
 
 ## 🏆 核心优化
 
@@ -97,7 +111,6 @@ packages/qrcode-fast/
 | `src/bin/simple_qr.rs` | `bench/rust-tools/src/bin/simple_qr.rs` |
 | `src/bin/verify_kennytm.rs` | `bench/rust-tools/src/bin/verify_kennytm.rs` |
 | `src/bin/verified_qr.rs` | `bench/rust-tools/src/bin/verified_qr.rs` |
-| `src/bin/benchmark_report.rs` | `bench/rust-tools/src/bin/benchmark_report.rs` |
 | `src/bin/terminal_demo.rs` | `bench/rust-tools/src/bin/terminal_demo.rs` |
 | `src/validation.rs` | `bench/rust-tools/src/validation.rs` |
 

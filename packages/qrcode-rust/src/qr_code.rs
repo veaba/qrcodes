@@ -93,6 +93,12 @@ impl QRCode {
     pub fn make_code(&mut self, text: &str) {
         self.data_list.clear();
         self.add_data(text);
+        // 复用同一实例时，必须先清空上一步推导出的版本号，
+        // 否则 make_impl 中的 `if self.type_number == 0` 不会重算，
+        // 导致用新文本配旧版本（例如先编短文本再编长文本），
+        // 生成的二维码无法解码。
+        self.type_number = 0;
+        self.data_cache = None;
         self.make();
     }
 
@@ -270,8 +276,41 @@ impl QRCode {
         self.modules[(self.module_count - 8) as usize][8] = Some(!test);
     }
 
+    /// 写入版本信息（Version Information），仅 Version >= 7 需要。
+    ///
+    /// QR 标准要求 v7 以上在右上与左下各写一份 18 位版本信息：
+    ///   6 位版本号 + 12 位 BCH(18,6) 纠错，生成多项式 0x1F25。
+    /// 此前本函数为空实现，导致 v7 及以上生成的二维码缺少版本信息，
+    /// 解码器无法定位版本而失败（rqrr 报 DataEcc）。
     fn setup_type_number(&mut self, _test: bool) {
-        // 简化版本
+        // 生成多项式 g18 = x^12 + x^11 + x^10 + x^9 + x^8 + x^5 + x^2 + 1 = 0x1F25
+        let g18: i32 = (1 << 12)
+            | (1 << 11)
+            | (1 << 10)
+            | (1 << 9)
+            | (1 << 8)
+            | (1 << 5)
+            | (1 << 2)
+            | (1 << 0);
+
+        let mut data = self.type_number << 12;
+
+        while get_bch_digit(data) - get_bch_digit(g18) >= 0 {
+            data ^= g18 << (get_bch_digit(data) - get_bch_digit(g18));
+        }
+
+        data |= self.type_number << 12;
+
+        // 18 位按 3x6 写入两个位置：
+        //   右上角：(row, module_count-11+col)
+        //   左下角：(module_count-11+col, row)
+        for i in 0..18 {
+            let bit = ((data >> i) & 1) == 1;
+            let row = i / 3;
+            let col = i % 3;
+            self.modules[row as usize][(self.module_count - 11 + col) as usize] = Some(bit);
+            self.modules[(self.module_count - 11 + col) as usize][row as usize] = Some(bit);
+        }
     }
 
     fn map_data(&mut self, data: &[i32]) {

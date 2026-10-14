@@ -30,6 +30,22 @@ pub fn validate_qr_code(
     }
 }
 
+/// 从 SVG 解码二维码并返回其内容（用于演示与调试）。
+///
+/// 与 [`validate_qr_code`] 的区别：本函数把解码出的文本直接交还给调用方，
+/// 便于直观展示「生成 → 渲染 → 解码」的完整链路结果。
+#[cfg(feature = "validation")]
+pub fn decode_qr_from_svg(svg: &str) -> Result<String, Box<dyn std::error::Error>> {
+    scan_qr_from_svg(svg.as_bytes())
+}
+
+#[cfg(not(feature = "validation"))]
+pub fn decode_qr_from_svg(_svg: &str) -> Result<String, Box<dyn std::error::Error>> {
+    Err("Validation feature is not enabled. \
+         Enable it with: cargo run --features validation"
+        .into())
+}
+
 #[cfg(feature = "validation")]
 fn scan_qr_from_svg(svg_bytes: &[u8]) -> Result<String, Box<dyn std::error::Error>> {
     use resvg::usvg;

@@ -1,117 +1,131 @@
 {
+  "_status": "secondary-source",
+  "_note": "Rust 三方 SVG-only harness 的旧口径测量（单位 µs）。部分用例 valid: false（产物未通过独立解码验证），且与权威文件 benchmark_speedup_verified.json 的端到端口径不同，不可混用、不可据此推导倍率。",
   "test_cases": [
     {
       "kennytm": {
-        "avg_time_us": 222.0,
-        "max_time_us": 240.0,
-        "min_time_us": 213.0,
+        "avg_time_us": 227.0,
+        "max_time_us": 432.0,
+        "min_time_us": 192.0,
         "module_count": 21,
+        "name": "kennytm-qrcode",
         "svg_size": 4270,
         "valid": true
       },
       "name": "Simple",
       "qrcode_fast": {
         "avg_time_us": 10.0,
-        "max_time_us": 12.0,
+        "max_time_us": 11.0,
         "min_time_us": 10.0,
         "module_count": 21,
-        "svg_size": 4187,
+        "name": "@veaba/qrcode-fast",
+        "svg_size": 4119,
         "valid": true
       },
       "qrcode_rust": {
-        "avg_time_us": 26.0,
-        "max_time_us": 29.0,
-        "min_time_us": 23.0,
+        "avg_time_us": 42.0,
+        "max_time_us": 219.0,
+        "min_time_us": 22.0,
         "module_count": 21,
-        "svg_size": 13798,
+        "name": "@veaba/qrcode-rust",
+        "svg_size": 13558,
         "valid": true
       },
       "text": "Hello World"
     },
     {
       "kennytm": {
-        "avg_time_us": 337.0,
-        "max_time_us": 352.0,
-        "min_time_us": 326.0,
+        "avg_time_us": 344.0,
+        "max_time_us": 595.0,
+        "min_time_us": 306.0,
         "module_count": 25,
+        "name": "kennytm-qrcode",
         "svg_size": 6164,
         "valid": true
       },
       "name": "Complex",
       "qrcode_fast": {
-        "avg_time_us": 17.0,
-        "max_time_us": 20.0,
-        "min_time_us": 16.0,
+        "avg_time_us": 16.0,
+        "max_time_us": 28.0,
+        "min_time_us": 15.0,
         "module_count": 25,
-        "svg_size": 5705,
-        "valid": false
+        "name": "@veaba/qrcode-fast",
+        "svg_size": 5668,
+        "valid": true
       },
       "qrcode_rust": {
-        "avg_time_us": 36.0,
-        "max_time_us": 48.0,
-        "min_time_us": 33.0,
+        "avg_time_us": 35.0,
+        "max_time_us": 64.0,
+        "min_time_us": 31.0,
         "module_count": 25,
-        "svg_size": 18842,
-        "valid": false
+        "name": "@veaba/qrcode-rust",
+        "svg_size": 18719,
+        "valid": true
       },
       "text": "Test QR Code 123"
     },
     {
       "kennytm": {
-        "avg_time_us": 501.0,
-        "max_time_us": 647.0,
-        "min_time_us": 467.0,
+        "avg_time_us": 503.0,
+        "max_time_us": 839.0,
+        "min_time_us": 436.0,
         "module_count": 29,
+        "name": "kennytm-qrcode",
         "svg_size": 8328,
         "valid": true
       },
       "name": "URL",
       "qrcode_fast": {
-        "avg_time_us": 23.0,
-        "max_time_us": 28.0,
-        "min_time_us": 21.0,
+        "avg_time_us": 22.0,
+        "max_time_us": 39.0,
+        "min_time_us": 20.0,
         "module_count": 29,
-        "svg_size": 6879,
+        "name": "@veaba/qrcode-fast",
+        "svg_size": 6876,
         "valid": true
       },
       "qrcode_rust": {
-        "avg_time_us": 54.0,
-        "max_time_us": 65.0,
-        "min_time_us": 51.0,
+        "avg_time_us": 51.0,
+        "max_time_us": 61.0,
+        "min_time_us": 49.0,
         "module_count": 29,
-        "svg_size": 26218,
+        "name": "@veaba/qrcode-rust",
+        "svg_size": 26215,
         "valid": true
       },
       "text": "https://github.com/veaba/qrcodes"
     },
     {
       "kennytm": {
-        "avg_time_us": 830.0,
-        "max_time_us": 860.0,
-        "min_time_us": 818.0,
+        "avg_time_us": 825.0,
+        "max_time_us": 1175.0,
+        "min_time_us": 758.0,
         "module_count": 37,
+        "name": "kennytm-qrcode",
         "svg_size": 13448,
         "valid": true
       },
       "name": "Long",
       "qrcode_fast": {
-        "avg_time_us": 37.0,
-        "max_time_us": 41.0,
-        "min_time_us": 36.0,
+        "avg_time_us": 40.0,
+        "max_time_us": 94.0,
+        "min_time_us": 33.0,
         "module_count": 37,
-        "svg_size": 10704,
-        "valid": false
+        "name": "@veaba/qrcode-fast",
+        "svg_size": 10762,
+        "valid": true
       },
       "qrcode_rust": {
-        "avg_time_us": 89.0,
-        "max_time_us": 119.0,
-        "min_time_us": 82.0,
+        "avg_time_us": 82.0,
+        "max_time_us": 116.0,
+        "min_time_us": 78.0,
         "module_count": 37,
-        "svg_size": 41043,
-        "valid": false
+        "name": "@veaba/qrcode-rust",
+        "svg_size": 41277,
+        "valid": true
       },
       "text": "Email: test@example.com | Phone: +1-234-567-8900 | Address: 123 Main St"
     }
   ],
-  "timestamp": "2026-02-03T01:53:47.763716700+08:00"
+  "timestamp": "2026-10-14T18:38:04.483182500+08:00"
 }

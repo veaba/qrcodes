@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 export const RustBenchmarkChart = () => {
   const data = [
-    { name: '单条生成', rust: 54.4, fast: 25.5, kennytm: 454.6 },
-    { name: 'SVG 生成', rust: 35.9, fast: 10.5, kennytm: 4.1 },
-    { name: '批量 100', rust: 4213.1, fast: 2093.1, kennytm: 34115.0 },
+    { name: 'Simple (Hello World)', rust: 32.1, fast: 18.5, kennytm: 210.4 },
+    { name: 'Complex (Test QR Code 123)', rust: 41.3, fast: 19.8, kennytm: 324.1 },
+    { name: 'URL (31 B)', rust: 53.2, fast: 24.2, kennytm: 453.3 },
+    { name: 'Long (74 B)', rust: 130.2, fast: 64.4, kennytm: 826.2 },
   ];
 
   const maxTime = Math.max(...data.map(d => Math.max(d.rust, d.fast, d.kennytm)));
@@ -16,7 +17,7 @@ export const RustBenchmarkChart = () => {
 
   return (
     <div style={{ marginBottom: '2rem' }}>
-      <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>性能对比 (µs/op) - 越低越好</h3>
+      <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>端到端 SVG 生成 (µs/op) - 越低越好</h3>
       <svg width="100%" height={chartHeight} viewBox={`0 0 800 ${chartHeight}`}>
         {data.map((item, index) => {
           const y = index * (barHeight * 3 + gap * 2) + 50;
@@ -80,89 +81,19 @@ export const RustBenchmarkChart = () => {
   );
 };
 
-export const ErrorLevelChart = () => {
-  const data = [
-    { name: 'L (低)', rust: 30.7, fast: 16.0, kennytm: 323.94 },
-    { name: 'M (中)', rust: 34.1, fast: 16.3, kennytm: 324.08 },
-    { name: 'Q (较高)', rust: 63.6, fast: 17.0, kennytm: 327.76 },
-    { name: 'H (高)', rust: 44.9, fast: 19.8, kennytm: 491.10 },
-  ];
-
-  const maxTime = Math.max(...data.map(d => Math.max(d.rust, d.fast, d.kennytm)));
-
+export const ErrorLevelNote = () => {
   return (
-    <div style={{ marginBottom: '2rem' }}>
-      <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>不同纠错级别性能 (µs/op)</h3>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '2rem', height: '280px', padding: '1rem' }}>
-        {data.map((item) => (
-          <div key={item.name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end', height: '200px' }}>
-              {/* qrcode-rust bar */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ fontSize: '10px', marginBottom: '0.25rem', color: '#dea584', fontWeight: 600 }}>
-                  {item.rust.toFixed(1)}
-                </div>
-                <div
-                  style={{
-                    width: '28px',
-                    height: `${(item.rust / maxTime) * 160}px`,
-                    backgroundColor: '#dea584',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.3s ease'
-                  }}
-                />
-              </div>
-              {/* qrcode-fast bar */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ fontSize: '10px', marginBottom: '0.25rem', color: '#f59e0b', fontWeight: 600 }}>
-                  {item.fast.toFixed(1)}
-                </div>
-                <div
-                  style={{
-                    width: '28px',
-                    height: `${(item.fast / maxTime) * 160}px`,
-                    backgroundColor: '#f59e0b',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.3s ease'
-                  }}
-                />
-              </div>
-              {/* kennytm bar */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ fontSize: '10px', marginBottom: '0.25rem', color: '#6b7280', fontWeight: 600 }}>
-                  {item.kennytm.toFixed(1)}
-                </div>
-                <div
-                  style={{
-                    width: '28px',
-                    height: `${(item.kennytm / maxTime) * 160}px`,
-                    backgroundColor: '#6b7280',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.3s ease'
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ marginTop: '0.5rem', fontSize: '13px', fontWeight: 500 }}>
-              {item.name}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ width: '14px', height: '14px', backgroundColor: '#dea584', borderRadius: '2px' }} />
-          <span style={{ fontSize: '12px' }}>qrcode-rust</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ width: '14px', height: '14px', backgroundColor: '#f59e0b', borderRadius: '2px' }} />
-          <span style={{ fontSize: '12px' }}>qrcode-fast</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ width: '14px', height: '14px', backgroundColor: '#6b7280', borderRadius: '2px' }} />
-          <span style={{ fontSize: '12px' }}>kennytm-qrcode</span>
-        </div>
-      </div>
+    <div style={{ padding: '1.5rem', backgroundColor: '#fefce8', borderRadius: '8px', marginTop: '1.5rem', border: '1px solid #fde047' }}>
+      <h3 style={{ marginTop: 0, color: '#854d0e' }}>⚠️ 纠错级别性能：未重新测量</h3>
+      <p style={{ color: '#854d0e', marginBottom: '0.5rem' }}>
+        本页此前展示的 L/M/Q/H 四级别柱状图（rust 30.7 / 34.1 / 63.6 / 44.9 µs，fast 16.0 / 16.3 / 17.0 / 19.8 µs，
+        kennytm 323.94 / 324.08 / 327.76 / 491.10 µs）来自已撤回的测量批次，其 kennytm 基线与当前代码对不上，因此不再展示。
+      </p>
+      <p style={{ color: '#854d0e', margin: 0 }}>
+        当前 <code>bench/rust-tools</code> 中没有按纠错级别分组的基准程序，权威数据文件
+        <code> benchmark_speedup_verified.json</code> 也只有 Simple / Complex / URL / Long 四个用例（全部使用默认的 H 级别）。
+        如需该维度数据，请先补充基准程序后重新测量。
+      </p>
     </div>
   );
 };
@@ -224,10 +155,10 @@ export const FeatureComparisonTable = () => {
 
 export const SpeedupCard = () => {
   const speedups = [
-    { test: '单条生成', rust: '8.4x', fast: '17.8x' },
-    { test: '批量 100 条', rust: '8.1x', fast: '16.3x' },
-    { test: '纠错级别 L', rust: '10.6x', fast: '20.3x' },
-    { test: '纠错级别 H', rust: '10.9x', fast: '24.8x' },
+    { test: 'Simple (11 B)', rust: '6.6x', fast: '11.4x' },
+    { test: 'Complex (17 B)', rust: '7.8x', fast: '16.2x' },
+    { test: 'URL (31 B)', rust: '8.5x', fast: '18.8x' },
+    { test: 'Long (74 B)', rust: '6.2x', fast: '12.5x' },
   ];
 
   return (
@@ -268,9 +199,9 @@ export const SpeedupCard = () => {
 
 ## 测试环境
 
-- **平台**: Windows
-- **Rust**: rustc 1.89.0
-- **测试时间**: 2026-02-02
+- **平台**: Windows x64
+- **Rust**: rustc 1.89.0，release (opt-level 3)
+- **测量时间**: 2026-03-20（[`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json) 的 `generated_at`）
 
 ## 比较的包
 
@@ -282,13 +213,15 @@ export const SpeedupCard = () => {
 
 ## 📊 性能可视化
 
-### 性能对比
+### 端到端 SVG 生成对比
+
+> 数据来源：[`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)，单位 µs（越低越好）。
 
 <RustBenchmarkChart />
 
 ### 不同纠错级别性能
 
-<ErrorLevelChart />
+<ErrorLevelNote />
 
 ---
 
@@ -308,27 +241,44 @@ export const SpeedupCard = () => {
 
 ### 三者对比
 
-基于 `criterion` 基准测试框架的最新结果（2026-02-02）：
+以下为权威数据文件 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json) 的完整内容（2026-03-20，Windows x64，rustc 1.89.0）。
 
-| 测试项 | qrcode-rust | qrcode-fast | kennytm-qrcode | rust 提升 | fast 提升 |
-|--------|-------------|-------------|----------------|-----------|-----------|
-| 单条生成 | ~54.4 µs | ~25.5 µs | ~454.6 µs | **8.4x** | **17.8x** |
-| 批量生成 (100条) | ~4.21 ms | ~2.09 ms | ~34.12 ms | **8.1x** | **16.3x** |
-| SVG 生成 | ~35.9 µs | ~10.5 µs | ~4.1 µs* | 0.1x | 0.4x |
-| 纠错级别 L | ~30.7 µs | ~16.0 µs | ~323.9 µs | **10.6x** | **20.3x** |
-| 纠错级别 M | ~34.1 µs | ~16.3 µs | ~324.1 µs | **9.5x** | **19.9x** |
-| 纠错级别 Q | ~63.6 µs | ~17.0 µs | ~327.8 µs | **5.2x** | **19.3x** |
-| 纠错级别 H | ~44.9 µs | ~19.8 µs | ~491.1 µs | **10.9x** | **24.8x** |
+**测量口径**：端到端 SVG 生成（`make_code` + `get_svg()` / kennytm 的 `render().build()`），三方实现同一进程内依次测量，
+每用例预热 20 次后重复 100 次取算术平均值，产物经 resvg + rqrr 独立解码验证。
 
-*注：kennytm-qrcode 的 SVG 生成使用了不同的渲染方式，直接输出字符而不是 SVG XML，所以看起来更快，但功能不同
+**复现命令**：
 
-### 文本长度对比
+```bash
+cd bench/rust-tools && cargo run --release --bin verify-speedup
+```
 
-| 文本长度 | qrcode-rust | qrcode-fast | kennytm-qrcode | rust 提升 | fast 提升 |
-|----------|-------------|-------------|----------------|-----------|-----------|
-| 短文本 (12 chars) | ~33.7 µs | ~16.0 µs | ~204.2 µs | **6.1x** | **12.8x** |
-| 中等文本 (36 chars) | ~56.4 µs | ~25.5 µs | ~471.6 µs | **8.4x** | **18.5x** |
-| 长文本 (98 chars) | ~153.5 µs | ~65.2 µs | ~1050.9 µs | **6.8x** | **16.1x** |
+| 用例 | 文本长度 | qrcode-rust | qrcode-fast | kennytm-qrcode | rust vs kennytm | fast vs kennytm | fast vs rust |
+|------|---------|-------------|-------------|----------------|-----------------|-----------------|--------------|
+| Simple (`Hello World`) | 11 B | ~32.1 µs | **~18.5 µs** | ~210.4 µs | **6.6x** | **11.4x** | **1.74x** |
+| Complex (`Test QR Code 123`) | 17 B | ~41.3 µs | **~19.8 µs** | ~324.1 µs | **7.8x** | **16.2x** | **2.08x** |
+| URL (`https://github.com/veaba/qrcodes`) | 31 B | ~53.2 µs | **~24.2 µs** | ~453.3 µs | **8.5x** | **18.8x** | **2.20x** |
+| Long (74 B) | 74 B | ~130.2 µs | **~64.4 µs** | ~826.2 µs | **6.2x** | **12.5x** | **2.02x** |
+
+**汇总区间**：`qrcode-fast` vs `kennytm-qrcode` **9-19x**，`qrcode-rust` vs `kennytm-qrcode` **6-9x**，`qrcode-fast` vs `qrcode-rust` **1.5-2.2x**。
+
+> ⚠️ 这些倍率是**单机单次测量**结果，不同 CPU / 编译器版本会有差异，应视为量级参考而非精确承诺。
+> 「快多少倍」取决于输入长度与用例：实测最低值出现在 `SiteUrl`（25 B，fast vs rust 1.47x），
+> 最高值出现在原 `URL` 用例（31 B，fast vs kennytm 18.8x）。
+
+### 本轮未测量的维度
+
+以下两类此前的表格已删除，因为它们来自无法复现的测量批次：
+
+- **纠错级别 L/M/Q/H**：权威数据文件只含四个用例（均为默认 H 级别），`bench/rust-tools` 中也没有按级别分组的基准程序
+- **批量生成 (100 条)**：旧表的 "rust ~4.21 ms / fast ~2.09 ms / kennytm ~34.12 ms" 在 `bench/rust-tools` 中没有对应的批量基准程序
+
+### 关于「SVG 生成」这一行
+
+旧表中有一行 "SVG 生成：rust ~35.9 µs / fast ~10.5 µs / kennytm ~4.1 µs（fast 0.4x）"。
+该行的 kennytm 数值并非 SVG XML，而是直接输出的字符画，属于**不同口径的功能对比**，放在同一张 µs 表里会误导，已删除。
+
+如需查看 Rust 三方在 SVG 输出上的对比，请以本节上方的端到端表格为准 —— 那里的 kennytm 列确实是
+`render::<svg::Color>().build()` 生成的 SVG。
 
 ## 验证结果
 
@@ -378,15 +328,22 @@ cargo run --release --features validation --bin validate-qr -- "Hello World"
 
 | 场景 | 推荐包 | 原因 |
 |------|--------|------|
-| 通用场景 | `qrcode-rust` | 功能完整，性能优秀，比 kennytm 快 8-10 倍 |
-| 极致性能 | `qrcode-fast` | 比 kennytm 快 15-25 倍，功能完整 |
+| 通用场景 | `qrcode-rust` | 功能完整，性能优秀，比 kennytm 快 6-9 倍 |
+| 极致性能 | `qrcode-fast` | 比 kennytm 快 9-19 倍，功能完整 |
 | 兼容性优先 | `kennytm-qrcode` | 社区成熟，文档丰富 |
 | WASM 场景 | `qrcode-rust` 或 `qrcode-fast` | 两者都支持 WASM |
 
 ## 运行基准测试
 
 ```bash
-# 运行 Rust 基准测试（包含三者对比）
+# 权威口径：三方端到端 SVG 生成，同机同进程，100 次/用例取平均
+cd bench/rust-tools
+cargo run --release --bin verify-speedup
+
+# 产物可解码性边界探测（全长度必跑）
+cargo run --release --features validation --bin scan-max
+
+# Criterion 微基准（仅 qrcode-rust / qrcode-fast 的包内对比，不含 kennytm）
 cd packages/qrcode-rust
 cargo bench --bench comparison_bench
 
@@ -398,10 +355,13 @@ cd bench/rust-tools
 cargo run --release --features validation --bin validate-qr -- "你的文本"
 ```
 
+> 注意：Criterion 的 `comparison_bench` 与 `verify-speedup` 是**两套不同的口径**，
+> 本页的所有倍率均以 `verify-speedup` 的输出（即 `benchmark_speedup_verified.json`）为准。
+
 ## 详细报告位置
 
 基准测试的详细报告生成在：
-- `target/criterion/` - Criterion 基准测试报告
+- `target/criterion/` - Criterion 基准测试报告（仅覆盖包内微基准）
 
 可以使用浏览器打开查看图表和详细分析：
 ```bash
@@ -413,28 +373,50 @@ start target/criterion/report/index.html
 
 ### 测试方法
 
-使用 Criterion.rs 进行基准测试：
-- 预热时间: 3 秒
-- 采样次数: 100 次
-- 测量时间: 约 5 秒/测试
+本页权威数字使用 `bench/rust-tools` 的 `verify-speedup`：
+- 预热次数: 20 次/用例
+- 采样次数: 100 次/用例
+- 统计量: 算术平均值
+- 口径: 端到端 SVG 生成（`make_code` + `get_svg()` / `render().build()`）
+- 正确性: resvg 渲染 + rqrr 独立解码
+
+此外 `packages/qrcode-rust` 下另有基于 Criterion.rs 的微基准（预热 3 秒，约 5 秒/测试），
+其结果不与本页倍率混用。
 
 ### 测试数据
 
-- 短文本: `"https://a.co"` (12 字符)
-- 中等文本: `"https://github.com/veaba/qrcodes"` (36 字符)
-- 长文本: 包含多个参数的 URL (98 字符)
+本页权威表格（`verify-speedup`）使用的四个用例：
+
+- Simple: `"Hello World"` (11 字节)
+- Complex: `"Test QR Code 123"` (17 字节)
+- URL: `"https://github.com/veaba/qrcodes"` (31 字节)
+- Long: `"Email: test@example.com | Phone: +1-234-567-8900 | Address: 123 Main St"` (74 字节)
+
+> 历史版本此处列的是短/中/长三档（12 / 36 / 98 字符），那是 Criterion 微基准的输入，
+> 与本页权威表格的四个用例不同，不要对应。
+
+> ✅ 关于解码能力：`benchmark_speedup_verified.json` 的 `capability` 说明两个 Rust 包现已覆盖
+> **全部 40 个版本，H 级最大 1273 字节**（QR 标准上限），与 JS 实现一致。
+> 此前的长度限制（`qrcode-fast` 约 110 字节、`qrcode-rust` 约 60 字节）与实例复用缺陷均已修复，
+> 详见该文件的 `fixed_defects`。复现：`cargo run --release --features validation --bin scan-max`。
 
 ### SVG 验证工具
 
 位于 `bench/rust-tools`，提供以下功能：
 - `validate-qr` - 生成并验证二维码
+- `scan-max` - 逐点扫描最大可解码长度（1..1400 字节）+ 独立解码验证
+- `verify-capacity-table` - 容量表 vs QR 标准（160 项，含边界行为断言）
+- `check-min-version` - 校验版本选择与容量表边界
+- `verify-speedup` - 三方端到端性能验证（权威口径）
 - `compare_matrix` - 对比模块矩阵与 kennytm
 - `compare_matrix_v1` - 对比版本 1 的矩阵
 
 ---
 
-*数据文件*: [backend_benchmark_pk.json](/backend_benchmark_pk.json) | [backend_benchmark_pk_summary.json](/backend_benchmark_pk_summary.json)
+*权威数据文件*: [benchmark_speedup_verified.json](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)
 
-*测试代码*: `packages/qrcode-rust/benches/comparison_bench.rs`
+*其他数据文件*: [benchmark_svg_rust.json](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)（旧口径，勿与权威文件混用）
 
-*最后更新*: 2026-02-02 (添加 qrcode-fast 对比，格式信息修复完成)
+*测试代码*: `bench/rust-tools/src/bin/verify_speedup.rs`、`packages/qrcode-rust/benches/comparison_bench.rs`
+
+*最后更新*: 2026-03-20（撤回伪数据时代的倍率与纠错级别/批量表格，统一引用 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)；删除 Node.js / Bun 对比的数据文件链接）

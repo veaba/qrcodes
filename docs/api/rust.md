@@ -6,8 +6,8 @@
 
 | 包名 | 性能 | 特点 | 适用场景 |
 |------|------|------|----------|
-| `qrcode-fast` | 🔥 极致 | 比 kennytm 快 37-75 倍 | 追求极致性能 |
-| `qrcode-rust` | ⚡ 快速 | 比 kennytm 快 8-10 倍，功能完整 | 标准 Rust 项目 |
+| `qrcode-fast` | 🔥 极致 | 比 kennytm 快 9-19 倍 | 追求极致性能 |
+| `qrcode-rust` | ⚡ 快速 | 比 kennytm 快 6-9 倍，功能完整 | 标准 Rust 项目 |
 
 ## 安装
 
@@ -442,20 +442,66 @@ async fn main() -> std::io::Result<()> {
 
 ## 性能对比
 
-### 与 kennytm/qrcode 对比
+> 本节所有数字均取自权威数据文件 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)。
+> 历史上这里曾出现 37-75 倍等大幅倍率，那些数字来自一个「生成伪数据」的构建，产物并非真实二维码，已全部撤回。
 
-| 测试项 | qrcode-fast | kennytm-qrcode | 速度提升 |
-|--------|-------------|----------------|----------|
-| 单条生成 | ~18.4 µs | ~688.9 µs | **🔥 37x 更快** |
-| SVG 生成 (Simple) | ~10.8 µs | ~815.8 µs | **🔥 75x 更快** |
-| 纠错级别 H | ~21.1 µs | ~446.2 µs | **🔥 21x 更快** |
+### 测量口径
 
-### 运行时性能
+- **指标**：端到端 SVG 生成（`make_code` + `get_svg()` / kennytm 的 `render().build()`），三方实现同一进程内依次测量
+- **采样**：每个用例预热 20 次后重复 100 次，取算术平均值
+- **正确性**：使用 resvg 渲染 + rqrr 独立解码，必须还原为原始文本
+- **环境**：Windows x64，rustc 1.89.0，release (opt-level 3)
+- **复现命令**：
 
-| 包 | 单条生成 (ops/s) | SVG 输出 (ops/s) |
-|----|-----------------|-----------------|
-| qrcode-fast | **54,283** | **92,486** |
-| qrcode-rust | 21,635 | 28,780 |
+  ```bash
+  cd bench/rust-tools && cargo run --release --bin verify-speedup
+  ```
+
+### 端到端 SVG 生成（平均值，越低越好）
+
+| 用例 | 文本长度 | qrcode-fast | qrcode-rust | kennytm-qrcode | fast vs kennytm | rust vs kennytm | fast vs rust |
+|------|---------|-------------|-------------|----------------|-----------------|-----------------|--------------|
+| Simple (`Hello World`) | 11 B | **18.5 µs** | 32.1 µs | 210.4 µs | **11.4x** | 6.6x | 1.74x |
+| Complex (`Test QR Code 123`) | 17 B | **19.8 µs** | 41.3 µs | 324.1 µs | **16.2x** | 7.8x | 2.08x |
+| URL (`https://github.com/veaba/qrcodes`) | 31 B | **24.2 µs** | 53.2 µs | 453.3 µs | **18.8x** | 8.5x | 2.20x |
+| Long (`Email: test@... Address: 123 Main St`) | 74 B | **64.4 µs** | 130.2 µs | 826.2 µs | **12.5x** | 6.2x | 2.02x |
+
+**汇总倍率区间**（`benchmark_speedup_verified.json` 的 `headline` 字段）：
+
+| 对比 | 倍率区间 |
+|------|---------|
+| `qrcode-fast` vs `kennytm-qrcode` | **9-19 倍** |
+| `qrcode-rust` vs `kennytm-qrcode` | **6-9 倍** |
+| `qrcode-fast` vs `qrcode-rust` | **1.5-2.2 倍** |
+
+同一份数据折算成吞吐量（由上表 µs 经 `1e6 / µs` 换算得出，仅作参考）：
+
+| 用例 | qrcode-fast | qrcode-rust | kennytm-qrcode |
+|------|-------------|-------------|----------------|
+| Simple | ~54,054 ops/s | ~31,153 ops/s | ~4,753 ops/s |
+| Complex | ~50,505 ops/s | ~24,213 ops/s | ~3,086 ops/s |
+| URL | ~41,322 ops/s | ~18,797 ops/s | ~2,206 ops/s |
+| Long | ~15,528 ops/s | ~7,680 ops/s | ~1,210 ops/s |
+
+> ⚠️ 上述倍率为**单机单次测量**结果，不同 CPU 与编译器版本会有差异，应视为量级参考而非精确承诺，
+> 也不表示 `qrcode-fast` 在任何基准排行榜上都是第一名。
+
+### 能力范围
+
+`benchmark_speedup_verified.json` 的 `capability` 字段记录了当前的真实能力上限：
+
+- **qrcode-fast** 与 **qrcode-rust** 均覆盖 **Version 1-40**，在纠错级别 **H** 下**最大可解码长度 1273 字节**（QR 标准上限）
+- 两者已与 JS 实现对齐，长度上限不再有差异；实例复用（同一 `QRCode` 反复编码不同长度文本）同样正常工作
+- 验证方式为**独立解码**：产物经 resvg 渲染 + rqrr 解码，必须还原为原始文本
+
+历史上曾存在一系列长度与正确性缺陷（`get_min_version` 的 `take(10)` 把版本锁在 Version 10、`RS_BLOCK_TABLE` 的 v15-H 占位符、`qrcode-fast` 对齐图案坐标表误用 v11 坐标、`qrcode-rust` 的 `setup_type_number` 空实现与实例复用未重置版本号），它们**均已修复**，明细见权威数据文件的 `fixed_defects` 数组。
+
+复现全长度扫描：
+
+```bash
+cd bench/rust-tools
+cargo run --release --features validation --bin scan-max   # 1..1400 字节逐点扫描
+```
 
 ## 选择指南
 

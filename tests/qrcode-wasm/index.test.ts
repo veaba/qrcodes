@@ -4,9 +4,19 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
+import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
 // Note: These tests require the WASM module to be built first
 // Run: npm run build:wasm
+
+const here = dirname(fileURLToPath(import.meta.url));
+const wasmPkgDir = resolve(here, '../../packages/qrcode-wasm/pkg');
+const wasmBuilt =
+  existsSync(resolve(wasmPkgDir, 'qrcodes.js')) &&
+  existsSync(resolve(wasmPkgDir, 'qrcodes_bg.wasm'));
 
 describe('@veaba/qrcode-wasm', () => {
   let mod: typeof import('@veaba/qrcode-wasm');
@@ -15,6 +25,16 @@ describe('@veaba/qrcode-wasm', () => {
   beforeAll(async () => {
     mod = await import('@veaba/qrcode-wasm');
     jsMod = await import('@veaba/qrcode-js');
+
+    // The functional tests below need an initialized WASM instance. Without
+    // this call every one of them had to be `it.skip`-ed, even though the
+    // module initializes fine under Node (the bytes are passed directly, so no
+    // fetch/`?url` resolution is involved).
+    if (wasmBuilt) {
+      await mod.init({
+        module_or_path: await readFile(resolve(wasmPkgDir, 'qrcodes_bg.wasm')),
+      });
+    }
   });
 
   describe('API Exports', () => {
@@ -106,28 +126,28 @@ describe('@veaba/qrcode-wasm', () => {
 
   // These tests require WASM to be initialized
   describe('QRCodeCore Properties (Requires WASM)', () => {
-    it.skip('should have text property', () => {
+    it('should have text property', () => {
       const qr = new mod.QRCodeCore('Hello World');
       expect(qr.text).toBe('Hello World');
     });
 
-    it.skip('should have correctLevel property', () => {
+    it('should have correctLevel property', () => {
       const qr = new mod.QRCodeCore('Hello', mod.QRErrorCorrectLevel.H);
       expect(qr.correctLevel).toBe(mod.QRErrorCorrectLevel.H);
     });
 
-    it.skip('should have typeNumber property', () => {
+    it('should have typeNumber property', () => {
       const qr = new mod.QRCodeCore('Hello');
       expect(typeof qr.typeNumber).toBe('number');
     });
 
-    it.skip('should have modules property as Uint8Array', () => {
+    it('should have modules property as Uint8Array', () => {
       const qr = new mod.QRCodeCore('Hello');
       expect(qr.modules).toBeInstanceOf(Uint8Array);
       expect(qr.modules.length).toBeGreaterThan(0);
     });
 
-    it.skip('modules property should match moduleCount', () => {
+    it('modules property should match moduleCount', () => {
       const qr = new mod.QRCodeCore('Hello');
       const count = qr.moduleCount;
       expect(qr.modules.length).toBe(count * count);
@@ -136,7 +156,7 @@ describe('@veaba/qrcode-wasm', () => {
 
   // These tests require WASM to be initialized
   describe('Async Function Return Types (Requires WASM)', () => {
-    it.skip('generateQRCodeAsync should return string not QRCodeResult', async () => {
+    it('generateQRCodeAsync should return string not QRCodeResult', async () => {
       const result = await mod.generateQRCodeAsync('Hello', { size: 128 });
       expect(typeof result).toBe('string');
       expect(result).toContain('<svg');
@@ -145,7 +165,7 @@ describe('@veaba/qrcode-wasm', () => {
       expect(typeof (result as Record<string, unknown>).text).toBe('undefined');
     });
 
-    it.skip('generateBatchAsync should return string[] not QRCodeResult[]', async () => {
+    it('generateBatchAsync should return string[] not QRCodeResult[]', async () => {
       const results = await mod.generateBatchAsync(['Hello', 'World'], { size: 128 });
       expect(Array.isArray(results)).toBe(true);
       expect(results).toHaveLength(2);
@@ -157,7 +177,7 @@ describe('@veaba/qrcode-wasm', () => {
       });
     });
 
-    it.skip('generateQRCodeAsync should support options', async () => {
+    it('generateQRCodeAsync should support options', async () => {
       const result = await mod.generateQRCodeAsync('Test', {
         size: 256,
         correctLevel: mod.QRErrorCorrectLevel.H
@@ -166,7 +186,7 @@ describe('@veaba/qrcode-wasm', () => {
       expect(result).toContain('<svg');
     });
 
-    it.skip('generateBatchAsync should handle empty array', async () => {
+    it('generateBatchAsync should handle empty array', async () => {
       const results = await mod.generateBatchAsync([]);
       expect(Array.isArray(results)).toBe(true);
       expect(results).toHaveLength(0);
@@ -175,7 +195,7 @@ describe('@veaba/qrcode-wasm', () => {
 
   // These tests require WASM to be initialized
   describe('Advanced Async Functions (Requires WASM)', () => {
-    it.skip('generateQRCodeAsyncAdvanced should return QRCodeResult', async () => {
+    it('generateQRCodeAsyncAdvanced should return QRCodeResult', async () => {
       const result = await mod.generateQRCodeAsyncAdvanced('Hello', { size: 128 });
       expect(result).toMatchObject({
         text: 'Hello',
@@ -185,7 +205,7 @@ describe('@veaba/qrcode-wasm', () => {
       expect(result.svg).toContain('</svg>');
     });
 
-    it.skip('generateBatchAsyncAdvanced should return QRCodeResult[]', async () => {
+    it('generateBatchAsyncAdvanced should return QRCodeResult[]', async () => {
       const results = await mod.generateBatchAsyncAdvanced(['Hello', 'World'], { size: 128 });
       expect(Array.isArray(results)).toBe(true);
       expect(results).toHaveLength(2);
@@ -198,7 +218,7 @@ describe('@veaba/qrcode-wasm', () => {
       });
     });
 
-    it.skip('generateQRCodeAsyncAdvanced should support cache option', async () => {
+    it('generateQRCodeAsyncAdvanced should support cache option', async () => {
       const result1 = await mod.generateQRCodeAsyncAdvanced('Test', { cache: true });
       expect(result1).toHaveProperty('moduleCount');
       expect(typeof result1.moduleCount).toBe('number');
@@ -290,16 +310,33 @@ describe('@veaba/qrcode-wasm', () => {
     });
   });
 
-  // Functional tests require browser environment with WASM
-  describe('Functional Tests (Requires WASM)', () => {
-    it.skip('should work after init', () => {});
-    it.skip('should generate QR codes', () => {});
-    it.skip('should use cache', () => {});
+  // Functional tests now run against the initialized instance (see the
+  // `mod.init(...)` call in beforeAll). These three previously were `it.skip`
+  // with EMPTY bodies — they reported as skipped while asserting nothing.
+  describe('Functional Tests', () => {
+    it('should work after init', () => {
+      const qr = new mod.QRCodeCore('after init');
+      expect(qr.moduleCount).toBeGreaterThan(0);
+      expect(qr.toSVG()).toContain('<svg');
+    });
+
+    it('should generate QR codes', () => {
+      const qr = new mod.QRCodeCore('functional', mod.QRErrorCorrectLevel.M);
+      expect(qr.text).toBe('functional');
+      expect(qr.moduleCount).toBeGreaterThanOrEqual(21);
+    });
+
+    it('should use cache', () => {
+      mod.clearQRCodeCache();
+      const before = mod.getCacheStats().size;
+      mod.getCachedQRCode('cache-probe');
+      expect(mod.getCacheStats().size).toBeGreaterThan(before);
+    });
   });
 
   describe('Terminal Output (Requires WASM)', () => {
     describe('toTerminal()', () => {
-      it.skip('should generate terminal string for simple text', () => {
+      it('should generate terminal string for simple text', () => {
         const qr = new mod.QRCodeCore('Hello', mod.QRErrorCorrectLevel.L);
         const terminal = qr.toTerminal();
         expect(terminal).toBeDefined();
@@ -307,14 +344,14 @@ describe('@veaba/qrcode-wasm', () => {
         expect(terminal.length).toBeGreaterThan(0);
       });
 
-      it.skip('should contain block characters', () => {
+      it('should contain block characters', () => {
         const qr = new mod.QRCodeCore('Test', mod.QRErrorCorrectLevel.M);
         const terminal = qr.toTerminal();
         expect(terminal).toContain('█');
         expect(terminal).toContain(' ');
       });
 
-      it.skip('should have correct dimensions (with default quietZone=1)', () => {
+      it('should have correct dimensions (with default quietZone=1)', () => {
         const qr = new mod.QRCodeCore('QR Code Test', mod.QRErrorCorrectLevel.H);
         const terminal = qr.toTerminal();
         const lines = terminal.split('\n');
@@ -322,7 +359,7 @@ describe('@veaba/qrcode-wasm', () => {
         expect(lines[0].length).toBe((qr.moduleCount + 2) * 2);
       });
 
-      it.skip('should invert colors when invert=true', () => {
+      it('should invert colors when invert=true', () => {
         const qr = new mod.QRCodeCore('Invert Test', mod.QRErrorCorrectLevel.M);
         const normal = qr.toTerminal(false);
         const inverted = qr.toTerminal(true);
@@ -331,14 +368,14 @@ describe('@veaba/qrcode-wasm', () => {
     });
 
     describe('toTerminalBraille()', () => {
-      it.skip('should generate braille output', () => {
+      it('should generate braille output', () => {
         const qr = new mod.QRCodeCore('Braille Test', mod.QRErrorCorrectLevel.M);
         const braille = qr.toTerminalBraille();
         expect(braille).toBeDefined();
         expect(typeof braille).toBe('string');
       });
 
-      it.skip('should contain braille characters', () => {
+      it('should contain braille characters', () => {
         const qr = new mod.QRCodeCore('Test', mod.QRErrorCorrectLevel.L);
         const braille = qr.toTerminalBraille();
         const brailleRegex = /[\u2800-\u28FF]/;
@@ -347,14 +384,14 @@ describe('@veaba/qrcode-wasm', () => {
     });
 
     describe('toTerminalColor()', () => {
-      it.skip('should generate colored terminal output', () => {
+      it('should generate colored terminal output', () => {
         const qr = new mod.QRCodeCore('Color Test', mod.QRErrorCorrectLevel.M);
         const colored = qr.toTerminalColor();
         expect(colored).toBeDefined();
         expect(colored).toContain('\x1b[');
       });
 
-      it.skip('should contain ANSI reset code', () => {
+      it('should contain ANSI reset code', () => {
         const qr = new mod.QRCodeCore('Reset Test', mod.QRErrorCorrectLevel.L);
         const colored = qr.toTerminalColor();
         expect(colored).toContain('\x1b[0m');
@@ -376,7 +413,7 @@ describe('@veaba/qrcode-wasm', () => {
       expect(mod.generateGradientQRCode).toBeDefined();
     });
 
-    it.skip('should generate QR codes for test URLs (requires WASM)', () => {
+    it('should generate QR codes for test URLs (requires WASM)', () => {
       // This test requires WASM to be initialized
       for (const url of testUrls) {
         const qr = new mod.QRCodeCore(url, mod.QRErrorCorrectLevel.H);
@@ -389,7 +426,7 @@ describe('@veaba/qrcode-wasm', () => {
       }
     });
 
-    it.skip('should generate styled QR codes for test URLs (requires WASM)', () => {
+    it('should generate styled QR codes for test URLs (requires WASM)', () => {
       for (const url of testUrls) {
         const roundedSvg = mod.generateRoundedQRCode(url, 256, 8);
         expect(roundedSvg).toContain('<svg');
@@ -401,7 +438,7 @@ describe('@veaba/qrcode-wasm', () => {
       }
     });
 
-    it.skip('should handle URL with ASCII characters correctly (requires WASM)', () => {
+    it('should handle URL with ASCII characters correctly (requires WASM)', () => {
       const url = 'http://127.0.0.1:8080/106p.zip';
       const qr = new mod.QRCodeCore(url, mod.QRErrorCorrectLevel.H);
       expect(qr.text).toBe(url);
@@ -409,7 +446,7 @@ describe('@veaba/qrcode-wasm', () => {
       expect(qr.moduleCount).toBeLessThanOrEqual(41);
     });
 
-    it.skip('should handle URL with percent-encoded characters correctly (requires WASM)', () => {
+    it('should handle URL with percent-encoded characters correctly (requires WASM)', () => {
       const url = 'http://127.0.0.1:8080/%E9%80%89%E7%89%87.zip';
       const qr = new mod.QRCodeCore(url, mod.QRErrorCorrectLevel.H);
       expect(qr.text).toBe(url);

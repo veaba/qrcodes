@@ -5,6 +5,10 @@ description: QRCode monorepo development guide. Use when working with the @veaba
 
 # QRCode Monorepo Development
 
+> ⚠️ **强制约束**：本仓库有[章程](../../../GOVERNANCE.md)。
+> 在新增/修改/删除任何文件之前，先读 `repo-governance` skill。
+> 核心红线：不得留下调试产物、不得新建未声明目录、提交前三道门槛必须通过。
+
 ## Project Overview
 
 This is a pnpm monorepo containing QRCode generators for multiple runtimes and platforms:
@@ -174,7 +178,11 @@ pnpm run benchmark # bun run benchmark.ts
 
 功能完整的 Rust QRCode 实现，与 kennytm-qrcode 参考实现保持一致。
 
-**性能**: 比 kennytm-qrcode 快 8-10 倍
+**性能**: 比 kennytm-qrcode 快 6-9 倍
+
+> ⚠️ 权威数据: `docs/public/benchmark_speedup_verified.json`
+> 复现: `cd bench/rust-tools && cargo run --release --bin verify-speedup`
+> 注意: 本包对约 60 字节以上的文本、以及复用同一实例编码更长文本时会生成不可解码的二维码。
 
 ```bash
 cd packages/qrcode-rust
@@ -194,7 +202,14 @@ cargo run --release --features validation --bin validate-qr -- "Hello World"
 
 极致性能优化版本，功能完整，生成的二维码可正确扫描。
 
-**性能**: 比 kennytm-qrcode 快 15-25 倍，比 qrcode-rust 快约 2 倍
+**性能**: 比 kennytm-qrcode 快 9-19 倍，比 qrcode-rust 快 1.5-2.2 倍
+
+> ⚠️ 权威数据: `docs/public/benchmark_speedup_verified.json`（其他文档中的性能倍数均以此为准）
+> 复现: `cd bench/rust-tools && cargo run --release --bin verify-speedup`
+> 已知能力: 覆盖 Version 1-40，H 级别最大可解码长度 1273 字节（QR 标准上限），与 JS 实现一致；
+> 产物经 resvg + rqrr 独立解码验证，实例复用正常。历史上因 `get_min_version` 的 `take(10)`
+> 与对齐图案坐标表缺陷导致长文本不可解码，均已修复。
+> 复现: `cd bench/rust-tools && cargo run --release --features validation --bin scan-max`
 
 ```bash
 cd packages/qrcode-fast

@@ -4,6 +4,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 // 检测是否在真实 Bun 环境运行
 const isBun = typeof (globalThis as any).Bun !== 'undefined';
@@ -270,9 +274,26 @@ describe('@veaba/qrcode-bun - Edge Cases', () => {
       console.log('Skipping Bun-specific file operations in Node.js environment');
       return;
     }
-    const qr = new QRCode('https://example.com');
-    await qr.saveToFile('./qrcode.svg');     // 保存 SVG
-    await qr.savePNGToFile('./qrcode.png');  // 保存 PNG
+    // Write into a temp dir — generated artifacts must never land in the repo
+    // (see GOVERNANCE.md §2).
+    const tmpDir = await mkdtemp(join(tmpdir(), 'qrcode-bun-'));
+    try {
+      const svgPath = join(tmpDir, 'qrcode.svg');
+      const pngPath = join(tmpDir, 'qrcode.png');
+
+      const qr = new QRCode('https://example.com');
+      await qr.saveToFile(svgPath);
+      await qr.savePNGToFile(pngPath);
+
+      // Assert the artifacts exist and are non-trivial, instead of just
+      // producing them and letting the test pass unconditionally.
+      const svg = await Bun.file(svgPath).text();
+      expect(svg).toContain('<svg');
+      expect(svg).toContain('</svg>');
+      expect((await Bun.file(pngPath).arrayBuffer()).byteLength).toBeGreaterThan(0);
+    } finally {
+      await rm(tmpDir, { recursive: true, force: true });
+    }
   })
 });
 
@@ -300,9 +321,21 @@ describe('@veaba/qrcode-bun - URL String Tests', () => {
       return;
     }
 
-    for (const url of testUrls) {
-      const qr = new QRCode(url, QRErrorCorrectLevel.H);
-      await qr.savePNGToFile(`./qrcode-bun-${new Date().getTime()}.png`);  // 保存 PNG
+    // Temp dir + real assertions: this test used to write
+    // `./qrcode-bun-<timestamp>.png` into the repo root on every run and
+    // assert nothing (GOVERNANCE.md §2 forbids the artifacts).
+    const tmpDir = await mkdtemp(join(tmpdir(), 'qrcode-bun-'));
+    try {
+      for (const [i, url] of testUrls.entries()) {
+        const pngPath = join(tmpDir, `qrcode-bun-${i}.png`);
+        const qr = new QRCode(url, QRErrorCorrectLevel.H);
+        await qr.savePNGToFile(pngPath);
+
+        expect(existsSync(pngPath)).toBe(true);
+        expect((await Bun.file(pngPath).arrayBuffer()).byteLength).toBeGreaterThan(0);
+      }
+    } finally {
+      await rm(tmpDir, { recursive: true, force: true });
     }
   });
 

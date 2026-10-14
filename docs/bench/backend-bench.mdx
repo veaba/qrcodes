@@ -1,204 +1,28 @@
 # 后端基准测试报告
 
-import { BarChart, ComparisonTable, PerformanceCalculator } from '../components/BenchmarkCharts';
+> ⚠️ **本页内容已撤回。**
+>
+> 本页此前给出的 Node.js 与 Bun 对比（"Bun 领先 19%-171%" 等）存在两个问题：
+>
+> 1. **混淆变量**：`@veaba/qrcode-node` 与 `@veaba/qrcode-bun` 是两套**不同的实现**
+>    （前者封装 `@veaba/qrcode-js-shared` 的 `QRCodeCore`，后者自带独立实现），
+>    因此该对比同时变动了「运行时」与「实现」两个因素，既不能证明 Node 与 Bun 的快慢，
+>    也无法归因到任一因素。
+> 2. **数据不可复现**：本页展示的数值无法在 `docs/public/` 的任何数据文件中找到出处，
+>    且仓库内另有两份独立抽样（原 `benchmark_node_result.json` / `benchmark_bun_result.json`）
+>    得出**相反**结论（Bun 领先）。
+>
+> 相关数字与数据文件已一并删除。若需重新建立该对比，必须先**固定实现**
+> （两个运行时加载同一份源码），并在独立进程中多轮重复取中位数。
 
-export const singleGenerationData = [
-  { name: '短文本', node: 15148, bun: 18071 },
-  { name: '中等文本', node: 13723, bun: 20718 },
-  { name: '长文本', node: 3932, bun: 7132 },
-  { name: 'Unicode', node: 10648, bun: 17586 },
-];
+## 有效数据
 
-export const batchGenerationData = [
-  { name: '10 条', node: 13050, bun: 18710 },
-  { name: '100 条', node: 6500, bun: 16900 },
-  { name: '1000 条', node: 7000, bun: 19000 },
-];
+各实现的性能数据请见：
 
-export const outputFormatData = [
-  { name: 'SVG', node: 14749, bun: 21235 },
-  { name: 'Styled SVG', node: 8409, bun: 11439 },
-];
-
-export const errorLevelData = [
-  { name: 'L (低)', node: 10838, bun: 31739 },
-  { name: 'M (中)', node: 10986, bun: 24932 },
-  { name: 'Q (较高)', node: 10862, bun: 23829 },
-  { name: 'H (高)', node: 15431, bun: 24058 },
-];
-
-export const allData = [
-  { name: '单条生成 (short)', node: 15148, bun: 18071 },
-  { name: '单条生成 (medium)', node: 13723, bun: 20718 },
-  { name: '单条生成 (long)', node: 3932, bun: 7132 },
-  { name: '单条生成 (unicode)', node: 10648, bun: 17586 },
-  { name: '批量生成 (10)', node: 13050, bun: 18710 },
-  { name: '批量生成 (100)', node: 6500, bun: 16900 },
-  { name: '批量生成 (1000)', node: 7000, bun: 19000 },
-  { name: 'SVG 输出', node: 14749, bun: 21235 },
-  { name: 'Styled SVG', node: 8409, bun: 11439 },
-  { name: 'PNG Buffer', node: 3472 },
-  { name: '纠错级别 L', node: 10838, bun: 31739 },
-  { name: '纠错级别 M', node: 10986, bun: 24932 },
-  { name: '纠错级别 Q', node: 10862, bun: 23829 },
-  { name: '纠错级别 H', node: 15431, bun: 24058 },
-  { name: '异步单条', node: 15656, bun: 15768 },
-];
-
-## 测试环境
-
-- **平台**: Windows
-- **Node.js**: v20.19.4
-- **Bun**: 1.3.0
-- **测试时间**: 2026-02-02
-
-## 测试包
-
-- `@veaba/qrcode-node` - Node.js 运行时实现
-- `@veaba/qrcode-bun` - Bun 运行时实现
+- [基准测试总览](./) — Rust 三方权威数据（来源 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)）
+- [后端 PK 对比](./backend-pk) — Rust 端到端 SVG 生成实测
+- [指南 · 性能对比](../guide/performance) — 按包整理的性能说明
 
 ---
 
-## 📊 可视化对比
-
-### 单条生成性能对比
-
-<BarChart data={singleGenerationData} title="单条 QRCode 生成性能 (ops/s)" />
-
-### 批量生成性能对比
-
-<BarChart data={batchGenerationData} title="批量 QRCode 生成性能 (ops/s)" />
-
-### 输出格式性能对比
-
-<BarChart data={outputFormatData} title="不同输出格式性能 (ops/s)" />
-
-### 纠错级别性能对比
-
-<BarChart data={errorLevelData} title="不同纠错级别性能 (ops/s)" />
-
----
-
-## 📋 详细数据对比
-
-<ComparisonTable data={allData} />
-
----
-
-## ⚡ 性能计算器
-
-使用下面的计算器，根据您的 QRCode 生成数量预估不同运行时的性能表现：
-
-<PerformanceCalculator data={allData} />
-
----
-
-## 性能分析
-
-### 单条生成性能
-
-| 测试项 | Node.js | Bun | 胜出 | 优势 |
-|--------|---------|-----|------|------|
-| 短文本 (short) | 15,148 | 18,071 | 🥟 Bun | +19.3% |
-| 中等文本 (medium) | 13,723 | 20,718 | 🥟 Bun | +51.0% |
-| 长文本 (long) | 3,932 | 7,132 | 🥟 Bun | +81.4% |
-| Unicode 文本 | 10,648 | 17,586 | 🥟 Bun | +65.2% |
-
-**结论**: Bun 在单条生成性能上全面领先 Node.js，尤其在处理中等文本时优势最明显。
-
-### 批量生成性能
-
-| 测试项 | Node.js | Bun | 胜出 | 优势 |
-|--------|---------|-----|------|------|
-| 10 条 | 13,050 | 18,710 | 🥟 Bun | +43.4% |
-| 100 条 | 6,500 | 16,900 | 🥟 Bun | +160.0% |
-| 1000 条 | 7,000 | 19,000 | 🥟 Bun | +171.4% |
-
-**结论**: Bun 在批量生成场景下性能优势巨大，比 Node.js 快 43% - 171%。
-
-### 输出格式性能
-
-| 测试项 | Node.js | Bun | 胜出 | 优势 |
-|--------|---------|-----|------|------|
-| SVG 输出 | 14,749 | 21,235 | 🥟 Bun | +44.0% |
-| Styled SVG | 8,409 | 11,439 | 🥟 Bun | +36.0% |
-| PNG Buffer | 3,472 | - | 🟢 Node.js | - |
-
-**结论**: Bun 在 SVG 输出格式上明显快于 Node.js。
-
-### 纠错级别性能
-
-| 纠错级别 | Node.js | Bun | 胜出 | 优势 |
-|----------|---------|-----|------|------|
-| L (低) | 10,838 | 31,739 | 🥟 Bun | +192.8% |
-| M (中) | 10,986 | 24,932 | 🥟 Bun | +126.9% |
-| Q (较高) | 10,862 | 23,829 | 🥟 Bun | +119.4% |
-| H (高) | 15,431 | 24,058 | 🥟 Bun | +55.9% |
-
-**结论**: 所有纠错级别下 Bun 都显著优于 Node.js，尤其在 L 级别优势最大。
-
-### 异步生成性能
-
-| 测试项 | Node.js | Bun | 胜出 | 优势 |
-|--------|---------|-----|------|------|
-| 异步单条生成 | 15,656 ops/s | 15,768 ops/s | 🥟 Bun | +0.7% |
-
----
-
-## 详细数据
-
-### @veaba/qrcode-node 详细结果
-
-```json
-{
-  "单条生成 (short)": { "ops": 15148, "avgTime": "0.0660 ms" },
-  "单条生成 (medium)": { "ops": 13723, "avgTime": "0.0729 ms" },
-  "单条生成 (long)": { "ops": 3932, "avgTime": "0.2543 ms" },
-  "单条生成 (unicode)": { "ops": 10648, "avgTime": "0.0939 ms" },
-  "批量生成 (10)": { "ops": 13050, "avgTime": "0.7663 ms" },
-  "批量生成 (100)": { "ops": 6500, "avgTime": "15.4275 ms" },
-  "批量生成 (1000)": { "ops": 7000, "avgTime": "146.0795 ms" },
-  "SVG 输出": { "ops": 14749, "avgTime": "0.0678 ms" },
-  "Styled SVG": { "ops": 8409, "avgTime": "0.1189 ms" },
-  "PNG Buffer": { "ops": 3472, "avgTime": "0.2881 ms" },
-  "异步单条": { "ops": 15656, "avgTime": "0.0639 ms" }
-}
-```
-
-### @veaba/qrcode-bun 详细结果
-
-```json
-{
-  "单条生成 (short)": { "ops": 18071, "avgTime": "0.0553 ms" },
-  "单条生成 (medium)": { "ops": 20718, "avgTime": "0.0483 ms" },
-  "单条生成 (long)": { "ops": 7132, "avgTime": "0.1402 ms" },
-  "单条生成 (unicode)": { "ops": 17586, "avgTime": "0.0569 ms" },
-  "批量生成 (10)": { "ops": 18710, "avgTime": "0.5344 ms" },
-  "批量生成 (100)": { "ops": 16900, "avgTime": "5.9143 ms" },
-  "批量生成 (1000)": { "ops": 19000, "avgTime": "51.7963 ms" },
-  "SVG 输出": { "ops": 21235, "avgTime": "0.0471 ms" },
-  "Styled SVG": { "ops": 11439, "avgTime": "0.0874 ms" },
-  "获取模块数据": { "ops": 21366, "avgTime": "0.0468 ms" },
-  "异步单条": { "ops": 15768, "avgTime": "0.0634 ms" }
-}
-```
-
----
-
-## 总结
-
-| 指标 | 胜出者 | 优势幅度 |
-|------|--------|----------|
-| 单条生成 | Bun | 19% - 81% |
-| 批量生成 | Bun | 43% - 171% |
-| SVG 输出 | Bun | 36% - 44% |
-| 纠错级别 | Bun | 56% - 193% |
-| 异步生成 | Bun | 0.7% |
-
-**总体结论**: 在 QRCode 生成性能方面，`@veaba/qrcode-bun` 全面优于 `@veaba/qrcode-node`。如果您的项目使用 Bun 运行时，推荐选择 `@veaba/qrcode-bun` 以获得更好的性能表现。
-
----
-
-*数据文件*: [benchmark_node_result.json](/benchmark_node_result.json) | [benchmark_bun_result.json](/benchmark_bun_result.json)
-
-*最后更新*: 2026-02-02
+_最后更新: 2026-03-20（撤回 Node.js / Bun 对比：该对比同时变动运行时与实现两个变量，且数据不可复现）_

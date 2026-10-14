@@ -2,6 +2,27 @@
 
 > 为 AI 助手准备的开发指南，避免踩坑
 
+## ⚠️ 先读章程
+
+**本仓库有强制性的[章程（GOVERNANCE.md）](./GOVERNANCE.md)，AI 助手必须遵守。**
+
+尤其是这几条，违反即不得合并：
+
+1. **不得留下调试产物** —— 一次性脚本、探测程序、生成的图片，
+   会话结束前必须清理；有长期价值的提升为 `tests/` 下的回归测试
+2. **不得创建无谓目录** —— 新增文件必须有明确归属（见章程 §2 目录职责表）
+3. **提交前三道门槛必须本地通过**：
+   ```bash
+   cargo fmt --all -- --check
+   cargo clippy --workspace --all-targets -- -D warnings
+   cargo test --workspace --release
+   ```
+4. **正确性优先于性能** —— 涉及编码逻辑的改动必须用独立解码器验证产物，
+   不能只看"图长得像不像二维码"（本仓库曾因此漏掉长期缺陷）
+5. **不得基于片段文本下结论** —— 必须给出文件路径、行号、实际内容、
+   可复现命令；并区分"已确证"与"推测"
+6. **不得擅自执行 git 写操作**（commit / push / tag）
+
 ## 项目概览
 
 高性能 QRCode 生成器，支持多运行时：
@@ -63,26 +84,38 @@ pnpm --filter @veaba/qrcode-node build         # Node.js 包
 ### 测试
 
 ```bash
-# 运行所有测试
+# 运行所有测试（含 qrcode-bun 真实 Bun 套件）
 pnpm test
 
-# 单元测试 (Node.js 环境)
+# 同上；test:unit 是 test 的别名，二者等价
 pnpm run test:unit
 
 # 浏览器测试 (WASM 需要 Chrome)
 pnpm run test:browser
 
-# 覆盖率报告
+# 浏览器测试，显示浏览器窗口（跨平台，无需 HEADED=1）
+pnpm run test:browser:ui
+
+# 覆盖率报告（测量 packages/*/src；不含 qrcode-bun）
 pnpm run test:coverage
+
+# Bun 覆盖率报告（qrcode-bun 由 Bun 实测，v8 测不到）
+pnpm run test:coverage:bun
 
 # 监视模式
 pnpm run test:watch
 
-# 测试特定包
+# 测试特定套件（tests/<suite>/）
 pnpm test:shared     # qrcode-js-shared
+pnpm test:js         # qrcode-js
 pnpm test:node       # qrcode-node
-pnpm test:ts         # qrcode-bun
+pnpm test:wasm       # qrcode-wasm
+pnpm test:bun        # qrcode-bun
 ```
+
+> `test` 与 `test:unit` 现在是同一入口，均覆盖全部套件。旧的 `pnpm test:ts`
+> 已移除（`--ts` 命名的是运行时而非套件），请改用 `pnpm test:bun`；
+> 传入 `--ts` 会报错并以退出码 2 中止。
 
 ### Rust 相关
 
@@ -134,13 +167,13 @@ cargo fmt --all -- --check
 
 - **类型**: `cdylib` + `rlib` (可生成 WASM)
 - **依赖**: `qrcode-rust-shared`
-- **特点**: 极致性能，比 kennytm/qrcode 快 37-75 倍
+- **特点**: 极致性能，比 kennytm/qrcode 快 9-19 倍
 
 ### qrcode-rust
 
 - **类型**: `rlib`
 - **依赖**: `qrcode-rust-shared`
-- **特点**: 功能完整，比 kennytm/qrcode 快 8-10 倍
+- **特点**: 功能完整，比 kennytm/qrcode 快 6-9 倍
 
 ### qrcode-wasm
 

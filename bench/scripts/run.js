@@ -3,7 +3,7 @@
 /**
  * 统一基准测试入口
  * 运行后端基准测试并生成数据供文档展示
- * 
+ *
  * 用法:
  *   node bench/scripts/run.js              # 运行所有测试
  *   node bench/scripts/run.js --node       # 仅运行 Node.js 测试
@@ -59,6 +59,28 @@ function ensurePublicDir() {
     fs.mkdirSync(publicDir, { recursive: true });
   }
   return publicDir;
+}
+
+/**
+ * 写入基准数据文件。
+ *
+ * 这些文件位于 docs/public/，按 GOVERNANCE.md §4.3 必须声明 `_status`。
+ * 由本脚本生成的一律是 `secondary-source` —— 全仓唯一权威是
+ * benchmark_speedup_verified.json（由 verify-speedup 生成，不在本脚本职责内）。
+ *
+ * 注意：_status 必须由生成器写入，不能靠手工补 —— 否则每次重跑基准都会丢失。
+ */
+function writeBenchData(filename, data, note) {
+  const payload = {
+    _status: 'secondary-source',
+    _note: note,
+    ...data,
+  };
+  fs.writeFileSync(
+    path.join(ensurePublicDir(), filename),
+    JSON.stringify(payload, null, 2)
+  );
+  return path.join('docs/public', filename);
 }
 
 // 构建 shared 包
@@ -162,23 +184,16 @@ async function runRustBenchmark() {
       stdio: 'inherit'
     });
 
-    // 解析并保存 Rust 结果
-    const rustResult = {
-      name: '@veaba/qrcode-rust & @veaba/qrcode-fast',
-      description: 'Rust QRCode 生成性能测试',
-      timestamp: new Date().toISOString(),
-      results: [
-        { name: '单条生成', ops: 185000, time: 5.4, avgTime: 0.0054 },
-        { name: '批量生成 (1000条)', ops: 520000, time: 1900, avgTime: 1.9 },
-      ],
-      note: '请查看 target/criterion 目录获取详细报告'
-    };
-
-    fs.writeFileSync(
-      path.join(ensurePublicDir(), 'benchmark_rust_result.json'),
-      JSON.stringify(rustResult, null, 2)
-    );
-    log('✅ Rust 结果已保存到 docs/public/benchmark_rust_result.json', 'green');
+    //
+    // 原实现会在跑完 cargo bench 后，把一组硬编码常量
+    // （单条 185000 ops/s、批量 520000 ops/s）写进该文件 ——
+    // cargo bench 的真实输出被丢弃，落盘的是伪造数字。
+    // 这批数字与权威文件记录的「作废宣称」同源。
+    //
+    // 真实测量请用 bench/rust-tools 的 verify-speedup，
+    // 其结果写入 docs/public/benchmark_speedup_verified.json（唯一权威）。
+    log('ℹ️  Rust 基准已运行；详细报告见 packages/*/target/criterion', 'yellow');
+    log('ℹ️  权威性能数据请用: cargo run --release --bin verify-speedup', 'yellow');
 
     return true;
   } catch (error) {
@@ -199,11 +214,7 @@ async function generateSummary() {
   };
 
   // 检查生成的文件
-  const files = [
-    'backend_benchmark_pk.json',
-    'backend_benchmark_pk_summary.json',
-    'benchmark_rust_result.json'
-  ];
+  const files = ['backend_benchmark_pk.json', 'backend_benchmark_pk_summary.json'];
 
   files.forEach(file => {
     const filepath = path.join(publicDir, file);
@@ -216,9 +227,10 @@ async function generateSummary() {
   });
 
   // 保存汇总
-  fs.writeFileSync(
-    path.join(publicDir, 'benchmark_summary.json'),
-    JSON.stringify(summary, null, 2)
+  writeBenchData(
+    'benchmark_summary.json',
+    summary,
+    '仅索引若干基准数据文件，本身不含测量结果。所列文件各自声明状态，引用时请以它们的 _status 为准；权威数据见 benchmark_speedup_verified.json。'
   );
 
   log('\n✅ 汇总报告已保存到 docs/public/benchmark_summary.json', 'green');
@@ -276,8 +288,10 @@ async function main() {
   log('📁 生成的数据文件:', 'bright');
   log('  - docs/public/backend_benchmark_pk.json (PK 完整结果)', 'cyan');
   log('  - docs/public/backend_benchmark_pk_summary.json (PK 摘要)', 'cyan');
-  log('  - docs/public/benchmark_rust_result.json (Rust 结果)', 'cyan');
   log('  - docs/public/benchmark_summary.json (汇总)', 'cyan');
+  log('', 'reset');
+  log('ℹ️  PK 数据已不再被文档引用（该对比同时变动运行时与实现两个变量，无法归因）', 'yellow');
+  log('ℹ️  权威性能数据请用: cargo run --release --bin verify-speedup', 'yellow');
 
   console.log('');
   log('🌐 查看结果:', 'bright');

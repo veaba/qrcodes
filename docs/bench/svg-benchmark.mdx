@@ -1,82 +1,308 @@
 # SVG QRCode 生成性能基准测试
 
+import { SvgFiveWayChart } from '../components/SvgFiveWayChart';
+
 ## 测试概述
 
 本基准测试对比了以下 Rust QRCode 生成库的 SVG 生成性能：
 
-| 包 | 描述 | 状态 |
-|---|---|---|
-| `kennytm-qrcode` | 社区流行的 Rust QRCode 库（参考基准） | ✅ 验证通过 |
-| `@veaba/qrcode-rust` | 纯 Rust 实现，功能完整 | ✅ 验证通过 |
-| `@veaba/qrcode-fast` | 极致性能优化版本，功能完整 | ✅ 验证通过 |
+| 包                   | 描述                                  | 状态                  |
+| -------------------- | ------------------------------------- | --------------------- |
+| `kennytm-qrcode`     | 社区流行的 Rust QRCode 库（参考基准） | ✅ 四用例均有效       |
+| `@veaba/qrcode-rust` | 纯 Rust 实现，功能完整                | ⚠️ 见下方「验证状态」 |
+| `@veaba/qrcode-fast` | 极致性能优化版本，功能完整            | ⚠️ 见下方「验证状态」 |
+
+> ⚠️ 本页数据来自 **SVG 专项 harness**（[`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)），**不是**全仓库的权威口径。
+> 权威数据是 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)（端到端 SVG，`qrcode-fast` 比 kennytm 快 **9-19 倍**、
+> `qrcode-rust` 快 **6-9 倍**）。两套数字口径不同，**请勿混用**，详见下方「性能对比」的警告。
 
 ## 最新测试结果
 
-*最后更新: 2026-02-02*
+_数据文件 `benchmark_svg_rust.json` 生成于: 2026-02-03_
 
 ### 测试环境
 
 - **平台**: Windows x64
 - **Rust**: rustc 1.89.0
-- **测试时间**: 2026-02-02
+- **数据文件生成时间**: 2026-02-03
 - **验证工具**: resvg + rqrr
 
 ### 测试用例
 
-| 名称 | 文本内容 | 版本 | 模块数 |
-|------|---------|------|--------|
-| Simple | "Hello World" | 1 | 21x21 |
-| Complex | "Test QR Code 123" | 2 | 25x25 |
-| URL | "https://github.com/veaba/qrcodes" | 3 | 29x29 |
-| Long | "Email: test@example.com \| Phone: +1-234-567-8900..." | 6 | 37x37 |
+| 名称    | 文本内容                                               | 版本 | 模块数 |
+| ------- | ------------------------------------------------------ | ---- | ------ |
+| Simple  | "Hello World"                                          | 1    | 21x21  |
+| Complex | "Test QR Code 123"                                     | 2    | 25x25  |
+| URL     | "https://github.com/veaba/qrcodes"                     | 3    | 29x29  |
+| Long    | "Email: test@example.com \| Phone: +1-234-567-8900..." | 6    | 37x37  |
 
 ### 性能对比
 
+数据来源：[`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)（SVG-only harness，`timestamp: 2026-02-03`），
+取该文件 `test_cases[*].*_time.avg_time_us` 的 `avg_time_us` 字段。
+
 | 测试用例 | kennytm (µs) | qrcode-rust (µs) | qrcode-fast (µs) | rust 加速比 | fast 加速比 |
-|---------|-------------|-----------------|-----------------|------------|------------|
-| Simple | ~230 | ~54 | ~25 | **4.3x** | **9.2x** |
-| Complex | ~350 | ~41 | ~17 | **8.5x** | **20.6x** |
-| URL | ~470 | ~55 | ~23 | **8.5x** | **20.4x** |
-| Long | ~870 | ~90 | ~40 | **9.7x** | **21.8x** |
+| -------- | ------------ | ---------------- | ---------------- | ----------- | ----------- |
+| Simple   | 222          | 26               | 10               | **8.5x**    | **22.2x**   |
+| Complex  | 337          | 36               | 17               | **9.4x**    | **19.8x**   |
+| URL      | 501          | 54               | 23               | **9.3x**    | **21.8x**   |
+| Long     | 830          | 89               | 37               | **9.3x**    | **22.4x**   |
+
+> ⚠️ **口径警告**：本表与 [后端 PK 对比](./backend-pk) 中的权威表格（fast 18.5-64.4 µs、rust 32.1-130.2 µs、kennytm 210.4-826.2 µs，
+> 比率 9-19x / 6-9x）**不是同一套测量**。本表来自较早的 SVG 专项 harness，热身与计时方式不同，
+> 且 `benchmark_svg_rust.json` 中部分用例标记为 `valid: false`（见下方「验证状态」）。
+> **选型请以 `benchmark_speedup_verified.json` 的 9-19x / 6-9x 为准**，本表仅作历史参考。
 
 ### 验证状态
 
-| 测试用例 | kennytm | qrcode-rust | qrcode-fast |
-|---------|---------|-------------|-------------|
-| Simple | ✅ | ✅ | ✅ |
-| Complex | ✅ | ✅ | ✅ |
-| URL | ✅ | ✅ | ✅ |
-| Long | ✅ | ✅ | ✅ |
+以下状态直接取自 [`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json) 各用例的 `valid` 字段：
 
-**说明**: 
-- ✅ 表示生成的二维码可以通过标准扫描器正确解码
-- 所有包在所有测试用例上均验证通过
+| 测试用例 | kennytm  | qrcode-rust     | qrcode-fast     |
+| -------- | -------- | --------------- | --------------- |
+| Simple   | ✅ valid | ✅ valid        | ✅ valid        |
+| Complex  | ✅ valid | ❌ valid: false | ❌ valid: false |
+| URL      | ✅ valid | ✅ valid        | ✅ valid        |
+| Long     | ✅ valid | ❌ valid: false | ❌ valid: false |
+
+**说明**:
+
+- ✅ 表示该用例生成的二维码可以通过标准扫描器正确解码（JSON 中 `valid: true`）
+- ❌ 表示该用例**未能通过解码验证**（JSON 中 `valid: false`）。该文件记录的是修复前的状态，
+  当前版本请以 `benchmark_speedup_verified.json` 的四用例验证结果为准（其 `correctness_check` 为 resvg + rqrr）
+- 本页下方「历史问题（已修复）」描述的正是这批 `valid: false` 的成因
+
+> 📌 历史版本这里写的是「所有包在所有测试用例上均验证通过 ✅」，
+> 与 `benchmark_svg_rust.json` 的实际字段不符（Complex / Long 两例为 `false`），已按原始数据更正。
+
+> ⚠️ 这两张表**不得**与 `benchmark_speedup_verified.json` 的数值混合使用：
+> 两者是不同 harness、不同口径的测量。全仓库的性能结论一律以后者为准。
 
 ## 主要发现
 
 ### 🏆 性能冠军
 
-`@veaba/qrcode-fast` 在所有测试用例中表现最佳：
+`@veaba/qrcode-fast` 在两个数据源中都是最快的实现：
 
-- 比 `kennytm-qrcode` 快 **9-22 倍**
-- 比 `@veaba/qrcode-rust` 快 **2-3 倍**
+- **权威口径**（[`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)，端到端 SVG）：比 `kennytm-qrcode` 快 **9-19 倍**，比 `@veaba/qrcode-rust` 快 **1.5-2.2 倍**
+- **本页 SVG 专项口径**（[`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)）：比 `kennytm-qrcode` 快 **19.8-22.4 倍**，比 `@veaba/qrcode-rust` 快约 **2.3-2.6 倍**
+
+> 两套数字的差异来自热身方式、计时范围与输入文本不同，**不可混用**。
+> 对外表述与选型请使用权威口径的 **9-19 倍 / 6-9 倍**。
 
 ### ✅ 验证状态
 
-所有包在所有测试用例上均验证通过：
+**本页数据文件（`benchmark_svg_rust.json`）中的状态并非全部通过**：Simple 与 URL 两例有效，
+Complex 与 Long 两例的 `qrcode-rust` / `qrcode-fast` 均标记为 `valid: false`（详见上方「验证状态」表）。
+
+当前版本的正确性验证结果以 `benchmark_speedup_verified.json` 为准 —— 其四个用例（11 / 17 / 31 / 74 字节）
+经 resvg + rqrr 独立解码均能还原原文。
+
 - `kennytm-qrcode`: 社区成熟实现，稳定可靠
-- `qrcode-rust`: 功能完整，与 kennytm 参考实现保持一致
-- `qrcode-fast`: 极致性能优化，功能完整
+- `qrcode-rust`: 功能完整，与 kennytm 参考实现保持一致；⚠️ 约 60 字节以上存在解码失败问题
+- `qrcode-fast`: 极致性能优化，功能完整；⚠️ 约 110 字节以上存在解码失败问题
 
 ### 📊 SVG 文件大小
 
-| 包 | Simple | Complex | URL | Long |
-|---|--------|---------|-----|------|
-| kennytm | ~4.2 KB | ~6.0 KB | ~8.3 KB | ~13.4 KB |
-| qrcode-rust | ~4.3 KB | ~6.2 KB | ~8.5 KB | ~13.6 KB |
-| qrcode-fast | ~4.1 KB | ~5.6 KB | ~6.9 KB | ~10.7 KB |
+数据来源：[`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json) 的 `svg_size` 字段（单位：字节）。
 
-三个包生成的 SVG 文件大小相当，`qrcode-fast` 在文件大小上也有轻微优势。
+| 包          | Simple | Complex | URL    | Long   |
+| ----------- | ------ | ------- | ------ | ------ |
+| kennytm     | 4,270  | 6,164   | 8,328  | 13,448 |
+| qrcode-rust | 13,798 | 18,842  | 26,218 | 41,043 |
+| qrcode-fast | 4,187  | 5,705   | 6,879  | 10,704 |
+
+`qrcode-fast` 的 SVG 体积最小且接近 `kennytm`；`qrcode-rust` 的输出明显更大（约为 `qrcode-fast` 的 3.3-3.8 倍）。
+
+> 历史版本此表写的是 "kennytm ~4.2 KB / qrcode-rust ~4.3 KB / qrcode-fast ~4.1 KB" 之类的近似值，
+> 把 `qrcode-rust` 的 13.8 KB 低估成了 4.3 KB，与 JSON 不符，已按原始字段更正。
+
+## 五方对比（Node / Bun / Rust，统一纠错级别 M）
+
+> 📌 本节含**两套数据**，请注意区分：
+>
+> 1. **下方交互式图表与原始数据文件（M 级，五方）** —— 数据已落盘为
+>    [`benchmark_svg_five_way.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_five_way.json)（`_status: secondary-source`），
+>    由 `node bench/svg-benchmark/collect-five-way.mjs` 采集三个 harness 生成。
+> 2. **Rust 三方的三个新用例已登记进权威文件** [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)
+>    （用例名 `HelloWorld` / `SiteUrl` / `CjkLong`，**H 级**，与权威文件原有四例同一口径）。
+>    因此权威文件的极值已由旧值 `11-19x` 拉宽为 **`9-19x`**、`1.7-2.2x` 拉宽为 **`1.5-2.2x`**（旧区间已作废）。
+
+### 为什么要先统一纠错级别
+
+直接对比五方会得到**不公平**的结果：`@veaba/qrcode-fast` / `@veaba/qrcode-rust` 默认使用 **H 级（30% 纠错）**，
+而 `kennytm-qrcode` 默认使用 **M 级（15% 纠错）**。同一段 `hello world`，veaba 系产出 25×25 模块，
+kennytm 仅 21×21 —— 相当于让 kennytm 做更小的活。
+
+因此本节**统一到纠错级别 M**。实测确认五方产物模块数完全一致（21 / 25 / 45），差异才可归因于实现效率。
+
+### 测试用例
+
+| 名称  | 文本                                                                                     | 字节 | 模块数 |
+| ----- | ---------------------------------------------------------------------------------------- | ---- | ------ |
+| short | `hello world`                                                                            | 11   | 21×21  |
+| url   | `https://qrcodes.veaba.me/`                                                              | 25   | 25×25  |
+| long  | 多引擎 QRCodes，高性能 QRCode 库，支持 WASM、Node.js、Bun 和 Rust 的多运行时 QRCode 解决方案 | 115  | 45×45  |
+
+### 交互式性能对比（单位：µs，预热 20 次 + 测量 100 次，取平均）
+
+<iframe
+  src="/benchmark_svg_five_way.json"
+  width="100%"
+  height="240px"
+  style={{ border: "1px solid #ddd", borderRadius: "4px", marginTop: "0.5rem" }}
+/>
+
+> 上框是**原始数据文件** [`benchmark_svg_five_way.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_five_way.json)。
+> 下方图表直接读取同一文件渲染，因此不会出现「文档手抄数字与 JSON 不一致」的情况。
+
+<SvgFiveWayChart />
+
+**排序**（按 115 字节长文本）：`qrcode-fast` < `qrcode-rust` < `qrcode-bun` < `kennytm-qrcode` < `qrcode-node`
+
+### 已登记进权威文件的三个用例（H 级）
+
+上表是 **M 级**的横向对比。另有三个用例以 **H 级**（与权威文件原有四例同一口径）
+登记进 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)：
+
+| 用例名      | 文本                 | 字节 | qrcode-fast | qrcode-rust | kennytm  |
+| ----------- | -------------------- | ---- | ----------- | ----------- | -------- |
+| `HelloWorld`| `hello world`        | 11   | 21.5 µs     | 35.5 µs     | 214.8 µs |
+| `SiteUrl`   | `https://qrcodes.veaba.me/` | 25 | 37.0 µs  | 54.5 µs     | 343.6 µs |
+| `CjkLong`   | 中文长文本           | 115  | 91.9 µs     | 180.1 µs    | 1302.5 µs |
+
+> 该三例的 `speedup` 极值（fast/kennytm 最低 9.3、fast/rust 最低 1.47）**拉宽了权威文件的全量区间**，
+> 故 `headline` 已由 `11-19x` / `1.7-2.2x` 更新为 **`9-19x`** / **`1.5-2.2x`**，旧区间登记进 `deprecated_claims`。
+
+#### 🔍 SVG 落盘（供人工扫码验证）
+
+生成上述用例时，每个实现前 5 次生成的 SVG 会同部落盘，便于人工用手机扫描核对：
+
+```
+docs/public/bench/svg/<前缀>_<用例>_<序号>.svg
+```
+
+| 前缀      | 对应实现                          |
+| --------- | --------------------------------- |
+| `fast`    | `qrcode-fast`（Rust）             |
+| `rust`    | `qrcode-rust`（Rust）             |
+| `kennytm` | `kennytm-qrcode`（Rust）          |
+| `node`    | `@veaba/qrcode-node`（Node.js）   |
+| `bun`     | `@veaba/qrcode-bun`（Bun）        |
+
+例如 `fast_long_0.svg` = `qrcode-fast` 生成的长文本二维码第 1 次。
+
+> ⚠️ 该目录已在 `.gitignore` 中，**不会入库**，属本地人工验证产物。
+> `fast_*` 与 `rust_*` 内容**逐字节相同**（同源编码器 `qrcode-rust-shared`），这是预期结果。
+
+#### 自动校验这些 SVG（推荐，替代人工逐个扫码）
+
+```bash
+cargo run --release --features validation --bin validate-svg-dir
+# 或指定目录
+cargo run --release --features validation --bin validate-svg-dir -- <目录>
+```
+
+该工具按文件名解析出「实现 + 用例」，用 `resvg` 渲染 + `rqrr` 解码还原文本并与原始输入比对，
+覆盖全部五方（`validate-all` 仅覆盖 Rust 三方）。全部通过退出码 0，任一失败退出码 1。
+目录不存在时优雅跳过（该目录不入库，他人 clone 后本就没有）。
+
+> 注意路径要带 `--features validation`，否则解码函数会返回「未启用验证特性」。
+
+#### ✅ 已修复缺陷：两个实现曾产出不可解码的二维码
+
+`validate-svg-dir` 首次运行即发现真实缺陷（用**独立解码器** `resvg` + `rqrr` 确认），
+现已全部修复：
+
+**缺陷 1 — `qrcode-bun` 缺版本信息（v7+ 不可解码）**
+
+| 实现 | Version ≤ 6 | Version ≥ 7 | 修复后 |
+| ---- | ----------- | ----------- | ------ |
+| `qrcode-fast` / `qrcode-rust` / `kennytm` | ✅ | ✅ | ✅ |
+| `@veaba/qrcode-node` | ✅ | ✅ | ✅ |
+| **`@veaba/qrcode-bun`** | ✅ | ❌ **`DataEcc`** | ✅ **已修复** |
+
+- 边界：58 字节（v6）通过，59 字节（v7）失败；`qrcode-node` 同版本通过，故缺陷在 bun 自身。
+- 根因：`packages/qrcode-bun/src/index.ts` 的 `setupTypeNumber()` 是**空实现**（仅有 `// 简化版本` 注释），
+  v7+ 缺少 18 位版本信息，解码器无法判定版本。
+- 修复：实现 BCH(18,6) 版本信息写入（生成多项式 `G18 = 0x1F25`），
+  右上 / 左下各写一份，与 `qrcode-js-shared` / `qrcode-fast` 的既有实现一致。
+
+**缺陷 2 — 对齐图案坐标表从 v22 起整体错位（影响 node 与 bun）**
+
+- 现象：`qrcode-node` 在 v22+ 不可解码（440 字节起失败），`qrcode-bun` 在 v23+ 失败。
+- 根因：`PATTERN_POSITION_TABLE` 含 **41** 条记录（应为 40），
+  多出一条重复的 `[6, 28, 50, 72, 98]`，导致 v22 及以后每个版本都取到**下一个版本**的坐标。
+  表内 v40 实为 v39 的值，v40 真实坐标缺失。
+- 修复：删除重复行，并用 QR 标准（ISO 18004 Annex E）坐标校正 v22–v40。
+  现 40 个版本与标准**逐项吻合**。
+- 该表在 `qrcode-js-shared` 与 `qrcode-bun` 各有一份副本，**两处都已修复**。
+
+**修复后验证**
+
+```bash
+cargo run --release --features validation --bin validate-svg-dir
+# ✅ 全部 75 个 SVG 均可被独立解码器还原为原始文本
+```
+
+另经逐版本扫描（v7 → v40，59 → 1273 字节）：`node` 与 `bun` **24/24 全部通过**，
+覆盖到 QR 标准 H 级上限 1273 字节。
+
+> 回归测试已固化于 `bench/rust-tools/tests/qr_validity.rs::persisted_svgs_all_decode`，
+> 五方 × 三用例全量断言，**不再豁免任何实现**。
+
+### ⚠️ 口径限制（请勿横向解读本表）
+
+本表**不是**「运行时优劣」排行榜：
+
+1. **Rust 三方同进程可比**，可信度最高。
+2. **`qrcode-node` 与 `qrcode-bun` 是两套不同实现** —— 前者封装 `@veaba/qrcode-js-shared` 的 `QRCodeCore`，
+   后者自带独立实现。因此 `qrcode-bun` 快于 `qrcode-node` **主要反映实现差异，不能归因于 Bun 运行时更快**。
+3. **跨语言（JS vs Rust）的倍数不予提供**：不同进程、不同 GC/JIT、不同计时原语
+   （`performance.now()` vs `Instant::now()`），相除得到的倍数没有意义。
+
+### 复现命令
+
+一条命令即可跑完三个 harness 并写入数据文件（**推荐**）：
+
+```bash
+# 采集五方数据 → docs/public/benchmark_svg_five_way.json
+pnpm bench:svg:five-way
+# 或
+node bench/svg-benchmark/collect-five-way.mjs
+```
+
+也可单独运行每个 harness：
+
+```bash
+# Rust 三方（统一 M 级，同进程）
+cargo run --release --bin five-way-rust-m --manifest-path bench/rust-tools/Cargo.toml
+
+# Node / Bun 两方（统一 M 级，各自独立进程）
+node bench/svg-benchmark/five-way-js.mjs --target=node --ec=M
+bun  bench/svg-benchmark/five-way-js.mjs --target=bun  --ec=M
+```
+
+> 采集器会校验各实现在同一用例下的**模块数是否一致**；不一致说明纠错级别没对齐，
+> 它会以退出码 1 报告，此时跨实现的比较无效。
+>
+> 未安装 Bun 时可加 `--skip-bun`（图表会自动隐藏该行）；想复用已编译的 Rust 产物可加 `--skip-rust`。
+>
+> 不带 `--ec=M` / 使用 `--bin five-way-rust` 可复现「未对齐纠错级别」的原始结果，
+> 用于观察默认级别差异带来的产物规模变化。
+
+### 生成权威口径数据 + SVG 落盘（H 级）
+
+```bash
+# Rust 三方：写入权威三用例数据，并落盘 SVG 到 docs/public/bench/svg/
+cargo run --release --bin five-way-rust-h --manifest-path bench/rust-tools/Cargo.toml
+
+# 落盘全部 100 次（默认只落前 5 次）
+cargo run --release --bin five-way-rust-h --manifest-path bench/rust-tools/Cargo.toml -- --save-all
+
+# Node / Bun 两方（H 级 + 落盘 SVG）
+node bench/svg-benchmark/five-way-js.mjs --target=node --ec=H --save-svg
+bun  bench/svg-benchmark/five-way-js.mjs --target=bun  --ec=H --save-svg
+```
 
 ## 运行基准测试
 
@@ -108,35 +334,50 @@ pnpm bench:svg
 
 测试完成后，结果会保存到以下位置：
 
-- **SVG 文件**: `docs/bench/benchmark-output/*.svg`
-- **JSON 报告**: `docs/public/benchmark_svg_rust.json`
+- **SVG 文件**: `docs/public/bench/benchmark-output/*.svg`
+- **五方数据（本页图表来源）**: [`benchmark_svg_five_way.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_five_way.json)（由 `pnpm bench:svg:five-way` 生成，含 fast / rust / kennytm / node / bun）
+- **Rust 三方专项 JSON**: [`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)（旧口径）
+- **权威口径数据**: [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)（由 `cd bench/rust-tools && cargo run --release --bin verify-speedup` 生成）
 
 ## 查看详细结果
 
-<iframe src="/benchmark_svg_rust.json" width="100%" height="400px" style={{border: '1px solid #ddd', borderRadius: '4px'}} />
+以下为 SVG 专项 harness 的原始 JSON（含 `valid` 字段，可自行核对上方「验证状态」表）：
+
+<iframe
+  src="/benchmark_svg_rust.json"
+  width="100%"
+  height="400px"
+  style={{ border: "1px solid #ddd", borderRadius: "4px" }}
+/>
 
 ## 使用建议
 
 ### 按场景推荐
 
-| 场景 | 推荐 | 原因 |
-|------|------|------|
-| 极致性能 | `@veaba/qrcode-fast` | 最快的生成速度，比 kennytm 快 15-25 倍 |
-| 通用场景 | `@veaba/qrcode-rust` | 功能完整，性能优秀，比 kennytm 快 8-10 倍 |
-| 兼容性优先 | `kennytm-qrcode` | 社区成熟，文档丰富 |
-| WASM 场景 | `@veaba/qrcode-rust` 或 `@veaba/qrcode-fast` | 两者都支持 WASM |
+| 场景       | 推荐                                         | 原因                                                 |
+| ---------- | -------------------------------------------- | ---------------------------------------------------- |
+| 极致性能   | `@veaba/qrcode-fast`                         | 最快的生成速度，比 kennytm 快 9-19 倍（权威口径）   |
+| 通用场景   | `@veaba/qrcode-rust`                         | 功能完整，性能优秀，比 kennytm 快 6-9 倍（权威口径） |
+| 兼容性优先 | `kennytm-qrcode`                             | 社区成熟，文档丰富                                   |
+| WASM 场景  | `@veaba/qrcode-rust` 或 `@veaba/qrcode-fast` | 两者都支持 WASM                                      |
 
 ### 版本选择建议
 
-| 文本长度 | 推荐包 | 说明 |
-|---------|--------|------|
-| < 20 字符（版本 1-2） | `@veaba/qrcode-fast` | 性能最佳 |
-| 20-50 字符（版本 3-5） | `@veaba/qrcode-fast` 或 `@veaba/qrcode-rust` | 两者都验证通过 |
-| > 50 字符（版本 6+） | `@veaba/qrcode-fast` | 性能最佳，验证通过 |
+✅ 两个 Rust 包现已覆盖**全部 40 个版本，H 级最大 1273 字节**（QR 标准上限），与 JS 实现一致；
+此前的解码边界问题（`qrcode-rust` 约 60 字节、`qrcode-fast` 约 110 字节）均已修复，
+详见 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json) 的 `capability` 与 `fixed_defects`。
+
+| 文本长度               | 推荐包                                       | 说明                                               |
+| ---------------------- | -------------------------------------------- | -------------------------------------------------- |
+| < 20 字符（版本 1-2）  | `@veaba/qrcode-fast`                         | 性能最佳                                           |
+| 20-50 字符（版本 3-5） | `@veaba/qrcode-fast` 或 `@veaba/qrcode-rust` | 两者都验证通过                                     |
+| > 50 字符（版本 6+）   | `@veaba/qrcode-fast`                         | ✅ 已验证；覆盖至 Version 40（H 级 1273 字节上限） |
 
 ### 纠错级别建议
 
-所有包在所有纠错级别（L/M/Q/H）上均验证通过，可放心使用。
+所有包在所有纠错级别（L/M/Q/H）**枚举上均可用**，但请注意：**本轮没有重新测量按纠错级别分组的性能**，
+权威数据文件 `benchmark_speedup_verified.json` 的四个用例均使用默认的 H 级别。
+本页历史版本给出的 L/M/Q/H 性能表已删除（来源不可复现）。
 
 ## 历史问题（已修复）
 
@@ -162,9 +403,13 @@ pnpm bench:svg
 
 #### 修复验证
 
-- ✅ "Hello World" (v1)：与 kennytm 完全匹配
-- ✅ "Test QR Code 123" (v2)：验证通过
-- ✅ 所有版本和纠错级别：验证通过
+以下结论来自 `benchmark_speedup_verified.json`（权威口径，四个用例经 resvg + rqrr 解码验证）：
+
+- ✅ "Hello World" (11 B)：解码还原成功
+- ✅ "Test QR Code 123" (17 B)：解码还原成功
+- ✅ URL (31 B) 与 Long (74 B)：解码还原成功
+
+> ✅ 现已彻底修复：`qrcode-fast` 与 `qrcode-rust` 均覆盖全部 40 个版本（H 级最大 1273 字节），
 
 ## 调试工具
 
@@ -206,4 +451,8 @@ cargo run --release --bin debug_data -- "Hello World"
 
 ---
 
-*数据自动生成的基准测试报告*
+_数据来源_: [benchmark_svg_rust.json](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)（本页表格） | [benchmark_speedup_verified.json](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)（权威口径）
+
+_复现权威口径_: `cd bench/rust-tools && cargo run --release --bin verify-speedup`
+
+_最后更新_: 2026-03-20（更正验证状态与文件大小，标注双口径来源，撤回 15-25 倍 / 8-10 倍表述）

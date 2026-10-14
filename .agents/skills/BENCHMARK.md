@@ -1,5 +1,17 @@
 # QRCode 基准测试开发指南
 
+> ⚠️ **基准相关强制约束**（[章程](../../GOVERNANCE.md) §3.2、§4）：
+>
+> 1. **正确性优先于性能** —— 基准数字只有在产物正确的前提下才有意义。
+>    涉及编码/布局的改动必须用**独立解码器**验证产物
+>    （`resvg` 渲染 + `rqrr` 解码），不得只检查"图长得像二维码"。
+> 2. **性能数字的单一事实来源**是 `docs/public/benchmark_speedup_verified.json`。
+>    所有文档必须引用它，不得单独维护数字副本。
+> 3. **作废的数字不得直接删除**，须登记进该文件的 `deprecated_claims`。
+> 4. 修改数字后必须运行 `node scripts/check-perf-claims.js`。
+> 5. **诊断程序用完即删**；有长期价值的提升为
+>    `bench/rust-tools/tests/` 下的回归测试。
+
 ## 快速开始
 
 ### 运行所有基准测试
@@ -94,7 +106,7 @@ pnpm bench:svg
 
 运行后生成以下文件：
 
-**SVG 文件** (`docs/bench/benchmark-output/`):
+**SVG 文件** (`docs/public/bench/benchmark-output/`):
 
 - `{测试名}_{包名}.svg` - 各包生成的二维码 SVG
 
@@ -460,9 +472,14 @@ import { BarChart, ComparisonTable } from '../components/BenchmarkCharts';
 
 使用 `bench/rust-tools` 验证工具：
 
-- ✅ `@veaba/qrcode-rust` - 生成的 SVG 可通过标准二维码扫描器正确解码（简单文本）
-- ✅ `@veaba/qrcode-fast` - 生成的 SVG 可通过标准二维码扫描器正确解码（简单文本）
-- ⚠️ 复杂文本（版本 3+）存在 Reed-Solomon 纠错码问题，验证失败
+- ✅ `@veaba/qrcode-rust` - 生成的 SVG 可通过标准二维码扫描器正确解码
+- ✅ `@veaba/qrcode-fast` - 生成的 SVG 可通过标准二维码扫描器正确解码
+
+> 此前记录的「复杂文本（版本 3+）Reed-Solomon 校验失败」已于 2026-03-20 修复。
+> 根因是共享的 `RS_BLOCK_TABLE` 中 v15-H 为占位符、`get_min_version` 的版本上限与头部重复计入、
+> `qrcode-rust` 缺少 v7+ 版本信息、`qrcode-fast` 对齐图案坐标表越界。
+> 现两个包均覆盖全部 40 个版本，H 级最大 1273 字节（QR 标准上限），与 JS 实现一致。
+> 复现：`cargo run --release --features validation --bin scan-max`
 
 验证命令：
 
