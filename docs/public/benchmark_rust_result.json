@@ -1,4 +1,7 @@
 {
+  "_status": "superseded",
+  "_superseded_by": "benchmark_speedup_verified.json",
+  "_note": "本文件为旧口径的一次性抽样，单位为 ops/s 且未固定输入文本、未验证产物正确性，数值无法与其他测量对齐。请勿在文档中引用本文件的数字。",
   "name": "@veaba/qrcode-rust & @veaba/qrcode-fast",
   "description": "Rust QRCode 生成性能测试",
   "timestamp": "2026-02-08T16:51:39.509Z",

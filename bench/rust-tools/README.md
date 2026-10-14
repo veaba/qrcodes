@@ -24,10 +24,11 @@ cargo run --release --features validation --bin fast-qr -- "Hello World"
 cargo run --release --bin compare-svgs -- "Hello World"
 ```
 
-### 查看基准测试报告
+### 运行性能验证
 
 ```bash
-cargo run --bin benchmark-report
+# 同机同进程实测三方实现（推荐）
+cargo run --release --bin verify-speedup
 ```
 
 ## 🛠️ 可用工具
@@ -87,9 +88,9 @@ cargo run --bin benchmark-report
 
 | 工具 | 功能 | 示例 |
 |------|------|------|
-| `benchmark-report` | 显示报告 | `cargo run --bin benchmark-report` |
 | `benchmark-full` | 完整基准测试 | `cargo run --bin benchmark-full` |
 | `benchmark-kennytm` | kennytm 基准测试 | `cargo run --bin benchmark-kennytm` |
+| `verify-speedup` | 三方实现同机实测 | `cargo run --release --bin verify-speedup` |
 
 ### 调试工具
 
@@ -114,7 +115,8 @@ cargo bench --bench svg_benchmark
 
 ## 📈 性能数据
 
-参见 `BENCHMARK_REPORT.md` 或运行 `benchmark-report` 工具。
+权威数据见 `docs/public/benchmark_speedup_verified.json`（仓库性能数字的唯一来源），
+本机实测请运行 `verify-speedup`。
 
 ## 📁 Bench 目录结构
 

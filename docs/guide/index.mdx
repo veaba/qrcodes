@@ -1,6 +1,6 @@
 # 介绍
 
-import { PackageManagerTabs } from '@rspress/core/theme';
+import { PackageManagerTabs } from "@rspress/core/theme";
 
 QRCode 是一个高性能、跨平台的 QRCode 生成库，支持多种运行时环境：浏览器（TypeScript/WASM）、Node.js、Bun 和原生 Rust。
 
@@ -8,29 +8,33 @@ QRCode 是一个高性能、跨平台的 QRCode 生成库，支持多种运行�
 
 ### 1. 极致性能
 
-核心算法经过优化，各运行时性能表现优异：
+核心算法经过优化，各运行时性能表现优异。
+
+Rust 三方端到端 SVG 生成（µs/条，越低越好；来源 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)）：
 
 ```
-单条生成性能对比（ops/s，越高越好）：
-
-Rust:    ████████████████████████████████████████████████████████████████████ 54,283
-Bun:     ██████████████████████████████████████████████                       18,902
-Node.js: ████████████████████████████████████                                   12,078
+qrcode-fast     ████                                        18.5 µs
+qrcode-rust     ███████                                     32.1 µs
+kennytm-qrcode  ███████████████████████████████████████████ 210.4 µs
+                                                  (Hello World, 11B)
 ```
+
+> 以上数字来自权威文件 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)，
+> 仅覆盖 Rust 三方实现。
 
 ### 2. 统一 API
 
 无论你使用哪个包，API 设计保持一致，轻松切换运行环境：
 
-import { Tab, Tabs } from '@rspress/core/theme';
+import { Tab, Tabs } from "@rspress/core/theme";
 
 <Tabs>
 <Tab label="浏览器 (JS)">
 
 ```typescript
 // 浏览器 (纯 JS)
-import { QRCode, QRErrorCorrectLevel } from '@veaba/qrcode-js';
-const qr = new QRCode('https://example.com', QRErrorCorrectLevel.H);
+import { QRCode, QRErrorCorrectLevel } from "@veaba/qrcode-js";
+const qr = new QRCode("https://example.com", QRErrorCorrectLevel.H);
 const svg = qr.toSVG();
 ```
 
@@ -39,10 +43,10 @@ const svg = qr.toSVG();
 
 ```typescript
 // 浏览器 (WASM)
-import init, { QRCodeWasm } from '@veaba/qrcode-wasm';
+import init, { QRCodeWasm } from "@veaba/qrcode-wasm";
 await init();
 const qr = new QRCodeWasm();
-qr.make_code('https://example.com');
+qr.make_code("https://example.com");
 const svg = qr.get_svg();
 ```
 
@@ -51,8 +55,8 @@ const svg = qr.get_svg();
 
 ```typescript
 // Node.js
-import { QRCode, QRErrorCorrectLevel } from '@veaba/qrcode-node';
-const qr = new QRCode('https://example.com', QRErrorCorrectLevel.H);
+import { QRCode, QRErrorCorrectLevel } from "@veaba/qrcode-node";
+const qr = new QRCode("https://example.com", QRErrorCorrectLevel.H);
 const svg = qr.toSVG();
 ```
 
@@ -61,8 +65,8 @@ const svg = qr.toSVG();
 
 ```typescript
 // Bun
-import { QRCode, QRErrorCorrectLevel } from '@veaba/qrcode-bun';
-const qr = new QRCode('https://example.com', QRErrorCorrectLevel.H);
+import { QRCode, QRErrorCorrectLevel } from "@veaba/qrcode-bun";
+const qr = new QRCode("https://example.com", QRErrorCorrectLevel.H);
 const svg = qr.toSVG();
 ```
 
@@ -131,15 +135,15 @@ cargo run --release --features validation --bin veaba-qr -- "Hello World"
 
 ### 浏览器（推荐纯 JS）
 
-<PackageManagerTabs command='install @veaba/qrcode-js' />
+<PackageManagerTabs command="install @veaba/qrcode-js" />
 
 ### 浏览器（WASM 版本）
 
-<PackageManagerTabs command='install @veaba/qrcode-wasm' />
+<PackageManagerTabs command="install @veaba/qrcode-wasm" />
 
 ### Node.js
 
-<PackageManagerTabs command='install @veaba/qrcode-node' />
+<PackageManagerTabs command="install @veaba/qrcode-node" />
 
 ### Bun
 
@@ -156,26 +160,39 @@ qrcode-rust = { git = "https://github.com/veaba/qrcodes" }
 
 ## 包对比
 
-| 包                   | 环境    | 特点                            | 包大小 | 性能          |
-| -------------------- | ------- | ------------------------------- | ------ | ------------- |
-| `@veaba/qrcode-js`   | 浏览器  | 纯 JS，无需 WASM，兼容性好      | ~15KB  | 9,662 ops/s   |
-| `@veaba/qrcode-wasm` | 浏览器  | Rust 编译，性能更好             | ~45KB  | ~15,000 ops/s |
-| `@veaba/qrcode-node` | Node.js | 支持 PNG Buffer 输出            | ~20KB  | 12,078 ops/s  |
-| `@veaba/qrcode-bun`  | Bun     | 批量性能最优                    | ~20KB  | 18,902 ops/s  |
-| `@veaba/qrcode-rust` | Rust    | 原生性能，比 kennytm 快 8-10 倍 | -      | 54,283 ops/s  |
+> ⚠️ 「性能」一列的数据来自不同基准测试，口径不统一，**不可横向比较**；
+> 未标注来源的历史数字（如 54,283 ops/s）源自一次会生成伪数据的构建，已作废。
+> 权威数据见 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)。
+
+| 包                   | 环境    | 特点                             | 包大小 | 参考性能             |
+| -------------------- | ------- | -------------------------------- | ------ | -------------------- |
+| `@veaba/qrcode-js`   | 浏览器  | 纯 JS，无需 WASM，兼容性好       | ~15KB  | 未统一测量           |
+| `@veaba/qrcode-wasm` | 浏览器  | Rust 编译，性能更好              | ~45KB  | 未统一测量           |
+| `@veaba/qrcode-node` | Node.js | 支持 PNG Buffer 输出             | ~20KB  | 未统一测量           |
+| `@veaba/qrcode-bun`  | Bun     | 批量性能最优                     | ~20KB  | 未统一测量           |
+| `@veaba/qrcode-fast` | Rust    | 极致性能，比 kennytm 快 9-19 倍 | -      | 18.5-64.4 µs / 条    |
+| `@veaba/qrcode-rust` | Rust    | 功能完整，比 kennytm 快 6-9 倍   | -      | 32.1-130.2 µs / 条   |
 
 ## 性能对比概览
 
-基于 2026-02-02 的基准测试结果：
+Rust 三方端到端 SVG 生成实测（Rust 1.89.0, release, 100 次平均）：
 
-| 测试项            | @veaba/qrcode-rust | @veaba/qrcode-bun | @veaba/qrcode-node |
-| ----------------- | ------------------ | ----------------- | ------------------ |
-| 单条生成 (medium) | 54,283 ops/s       | 18,902 ops/s      | 12,078 ops/s       |
-| SVG 输出          | 92,486 ops/s       | 18,003 ops/s      | 10,150 ops/s       |
-| 纠错级别 H        | 47,436 ops/s       | 20,170 ops/s      | 11,179 ops/s       |
+| 测试用例               | qrcode-fast | qrcode-rust | kennytm-qrcode |
+| ---------------------- | ----------- | ----------- | -------------- |
+| Hello World (11B)      | 18.5 µs     | 32.1 µs     | 210.4 µs       |
+| Test QR Code 123 (17B) | 19.8 µs     | 41.3 µs     | 324.1 µs       |
+| URL (31B)              | 24.2 µs     | 53.2 µs     | 453.3 µs       |
+| 长文本 (74B)           | 64.4 µs     | 130.2 µs    | 826.2 µs       |
+
+Node.js / Bun 与 Rust 之间的倍率**不予提供**：两组数据出自不同的测量程序与不同的机器，
+相除得到的倍数没有意义。
+
+> ⚠️ 历史上此处曾列出 Node.js 与 Bun 的对比（8,487 / 7,576 ops/s）。
+> 该对比同时变动了「运行时」与「实现」两个变量 —— `@veaba/qrcode-node` 与 `@veaba/qrcode-bun`
+> 是两套不同的实现，因此无法归因到任一因素，已删除。
 
 ## 下一步
 
-- [快速开始](./quick-start) - 5 分钟上手教程
+- [快速开始](./quick-start/) - 5 分钟上手教程
 - [性能对比](../bench/) - 详细的性能测试数据
 - [API 参考](../api/) - 完整的 API 文档

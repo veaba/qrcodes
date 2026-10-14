@@ -42,10 +42,34 @@ node bench/svg-benchmark/rust.js
 node bench/svg-benchmark/node-bun.js
 ```
 
+## 五方对比（统一纠错级别 M）
+
+三个 harness 的产物由采集器合并为一份数据文件，供文档页 `/bench/svg-benchmark` 的交互式图表读取：
+
+```bash
+# 一条命令跑完三个 harness 并写入 docs/public/benchmark_svg_five_way.json
+pnpm bench:svg:five-way
+```
+
+| 文件 | 职责 |
+| ---- | ---- |
+| `collect-five-way.mjs` | 采集器：依次运行下列三个 harness，合并 JSON，并校验各用例模块数一致 |
+| `five-way-js.mjs` | JS 侧测量器（`--target=node` / `--target=bun`，`--ec=M`） |
+| `../rust-tools/src/bin/five_way_rust_m.rs` | Rust 侧测量器（fast / rust / kennytm，同进程，M 级） |
+
+参数：
+
+- `--skip-rust`：复用已编译的 Rust 产物，跳过 `cargo run`
+- `--skip-bun`：未安装 Bun 时使用；图表会自动隐藏 Bun 行
+
+> 采集器在两个 harness 的 stdout 中按 `===FIVEWAY_JSON_BEGIN===` / `===FIVEWAY_JSON_END===`
+> 标记截取 JSON。若 harness 报错，请单独运行它查看原因。
+
 ## 输出文件
 
-- **SVG 文件**: `docs/bench/benchmark-output/*.svg`
-- **JSON 报告**: `docs/public/benchmark_svg_rust.json`
+- **SVG 文件**: `docs/public/bench/benchmark-output/*.svg`
+- **五方数据**: `docs/public/benchmark_svg_five_way.json`
+- **Rust 三方专项**: `docs/public/benchmark_svg_rust.json`
 
 ## 测试说明
 

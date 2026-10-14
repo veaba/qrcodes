@@ -714,9 +714,19 @@ function saveResults(suite: PKBenchmarkSuite): void {
     fs.mkdirSync(CONFIG.outputDir, { recursive: true });
   }
 
+  // 按 GOVERNANCE.md §4.3，docs/public/ 下的数据文件必须声明 _status。
+  // 本套件只测 Node.js 与 Bun，不含 Rust，因此是次要来源而非权威。
+  const STATUS_NOTE =
+    'Node.js 与 Bun 的对比测量；仅覆盖这两个 JS 运行时，不含 Rust 实现，' +
+    '因此不能用来推导与 kennytm 的倍数。与权威文件 benchmark_speedup_verified.json ' +
+    '口径不同，不可混用。';
+
   // 保存完整结果
   const outputPath = path.join(CONFIG.outputDir, 'backend_benchmark_pk.json');
-  fs.writeFileSync(outputPath, JSON.stringify(suite, null, 2));
+  fs.writeFileSync(
+    outputPath,
+    JSON.stringify({ _status: 'secondary-source', _note: STATUS_NOTE, ...suite }, null, 2)
+  );
   console.log(`💾 结果已保存到: ${outputPath}`);
 
   // 保存简化版结果（用于前端展示）
@@ -737,7 +747,21 @@ function saveResults(suite: PKBenchmarkSuite): void {
   };
 
   const summaryPath = path.join(CONFIG.outputDir, 'backend_benchmark_pk_summary.json');
-  fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+  fs.writeFileSync(
+    summaryPath,
+    JSON.stringify(
+      {
+        _status: 'secondary-source',
+        _superseded_by: 'backend_benchmark_pk.json',
+        _note:
+          'backend_benchmark_pk.json 的摘要切片，覆盖范围更窄。引用请优先使用完整文件，' +
+          '并与权威文件 benchmark_speedup_verified.json 区分口径。',
+        ...summary,
+      },
+      null,
+      2
+    )
+  );
   console.log(`💾 摘要已保存到: ${summaryPath}`);
 }
 

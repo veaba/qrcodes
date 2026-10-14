@@ -1,366 +1,93 @@
 # 基准测试
 
-import { useState, useMemo } from 'react';
-import { BarChart, ComparisonTable, PerformanceCalculator } from '../components/BenchmarkCharts';
+import { SvgFiveWayChart } from "../components/SvgFiveWayChart";
 
-export const BenchmarkDashboard = () => {
-  const [selectedPackages, setSelectedPackages] = useState(['node', 'bun', 'rust']);
-  const [selectedCategory, setSelectedCategory] = useState('single');
+本章节汇总 QRCode 各实现的可复现性能基准测试。
 
-  const allData = {
-    single: [
-      { name: '短文本', node: 12078, bun: 14287, rust: 18518, fast: 40000 },
-      { name: '中等文本', node: 10580, bun: 14910, rust: 17793, fast: 39215 },
-      { name: '长文本', node: 3043, bun: 5924, rust: 6514, fast: 15337 },
-      { name: 'Unicode', node: 8553, bun: 14588, rust: 8333, fast: 20000 },
-    ],
-    batch: [
-      { name: '10 条', node: 10980, bun: 14870, rust: 23753, fast: 47619 },
-      { name: '100 条', node: 5300, bun: 12800, rust: 23696, fast: 47846 },
-      { name: '1000 条', node: 5000, bun: 13000, rust: 23809, fast: 47619 },
-    ],
-    output: [
-      { name: 'SVG', node: 10150, bun: 18003, rust: 27855, fast: 95238 },
-      { name: 'Styled SVG', node: 5374, bun: 10006, rust: 18518, fast: 40000 },
-    ],
-    error: [
-      { name: 'L (低)', node: 8619, bun: 27640, rust: 32626, fast: 62500 },
-      { name: 'M (中)', node: 10476, bun: 22093, rust: 29308, fast: 61349 },
-      { name: 'Q (较高)', node: 7746, bun: 18726, rust: 15723, fast: 58823 },
-      { name: 'H (高)', node: 8871, bun: 14344, rust: 22271, fast: 50505 },
-    ],
-  };
+## SVG 生成性能对比
 
-  const categories = {
-    single: '单条生成',
-    batch: '批量生成',
-    output: '输出格式',
-    error: '纠错级别',
-  };
-
-  const packages = {
-    node: { name: 'Node.js', color: '#339933' },
-    bun: { name: 'Bun', color: '#fbf0df' },
-    rust: { name: 'Rust (qrcode-rust)', color: '#dea584' },
-    fast: { name: 'Rust (qrcode-fast)', color: '#f59e0b' },
-  };
-
-  const currentData = allData[selectedCategory];
-
-  const togglePackage = (pkg) => {
-    setSelectedPackages(prev => 
-      prev.includes(pkg) 
-        ? prev.filter(p => p !== pkg)
-        : [...prev, pkg]
-    );
-  };
-
-  const filteredData = useMemo(() => {
-    return currentData.map(item => {
-      const filtered = { name: item.name };
-      selectedPackages.forEach(pkg => {
-        filtered[pkg] = item[pkg];
-      });
-      return filtered;
-    });
-  }, [currentData, selectedPackages]);
-
-  return (
-    <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '8px', marginTop: '1.5rem' }}>
-      <h2 style={{ marginTop: 0 }}>🔬 交互式性能比较</h2>
-      
-      {/* 类别选择 */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '14px', fontWeight: 500 }}>
-          选择测试类别
-        </label>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {Object.entries(categories).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setSelectedCategory(key)}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: selectedCategory === key ? '#3b82f6' : '#e2e8f0',
-                color: selectedCategory === key ? 'white' : '#475569',
-                fontWeight: selectedCategory === key ? 600 : 400,
-                transition: 'all 0.2s'
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 包选择 */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '14px', fontWeight: 500 }}>
-          选择要比较的包
-        </label>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {Object.entries(packages).map(([key, pkg]) => (
-            <button
-              key={key}
-              onClick={() => togglePackage(key)}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                border: '2px solid ' + (selectedPackages.includes(key) ? pkg.color : '#e2e8f0'),
-                cursor: 'pointer',
-                backgroundColor: selectedPackages.includes(key) ? pkg.color : 'white',
-                color: selectedPackages.includes(key) ? (key === 'bun' ? '#333' : 'white') : '#475569',
-                fontWeight: selectedPackages.includes(key) ? 600 : 400,
-                transition: 'all 0.2s'
-              }}
-            >
-              {key === 'node' ? '🟢' : key === 'bun' ? '🥟' : '🦀'} {pkg.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 图表 */}
-      {selectedPackages.length > 0 && (
-        <BarChart 
-          data={filteredData} 
-          title={`${categories[selectedCategory]}性能对比 (ops/s)`} 
-        />
-      )}
-
-      {/* 表格 */}
-      {selectedPackages.length > 0 && (
-        <ComparisonTable data={filteredData} />
-      )}
-
-      {selectedPackages.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-          请至少选择一个包进行比较
-        </div>
-      )}
-    </div>
-  );
-};
-
-export const QuickStats = () => {
-  const stats = [
-    { label: 'Node.js 最快', value: '短文本生成', ops: '12,078 ops/s', color: '#339933' },
-    { label: 'Bun 最快', value: '纠错级别 L', ops: '27,640 ops/s', color: '#fbf0df', textDark: true },
-    { label: 'qrcode-rust 最快', value: 'SVG 输出', ops: '27,855 ops/s', color: '#dea584' },
-    { label: 'qrcode-fast 最快', value: 'SVG 输出', ops: '95,238 ops/s', color: '#f59e0b' },
-  ];
-
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          style={{
-            padding: '1.5rem',
-            backgroundColor: stat.color,
-            borderRadius: '8px',
-            color: stat.textDark ? '#333' : 'white',
-            textAlign: 'center',
-            border: stat.textDark ? '1px solid #d4a373' : 'none'
-          }}
-        >
-          <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '0.5rem' }}>{stat.label}</div>
-          <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '0.25rem' }}>{stat.value}</div>
-          <div style={{ fontSize: '14px', opacity: 0.8 }}>{stat.ops}</div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-export const SVGValidationCard = () => {
-  return (
-    <div style={{ padding: '1.5rem', backgroundColor: '#f0fdf4', borderRadius: '8px', marginTop: '1.5rem', border: '1px solid #86efac' }}>
-      <h3 style={{ marginTop: 0, color: '#166534' }}>✅ SVG 验证结果</h3>
-      <p style={{ color: '#166534', marginBottom: '1rem' }}>
-        使用 <code>bench/rust-tools</code> 验证工具对生成的 SVG 进行验证：
-      </p>
-      
-      <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '6px', fontFamily: 'monospace', fontSize: '13px' }}>
-        <div style={{ color: '#22c55e', fontWeight: 'bold' }}>✅ @veaba/qrcode-rust</div>
-        <div style={{ color: '#64748b', marginLeft: '1rem' }}>生成的 SVG 可通过标准二维码扫描器正确解码</div>
-        
-        <div style={{ color: '#22c55e', fontWeight: 'bold', marginTop: '0.5rem' }}>✅ @veaba/qrcode-fast</div>
-        <div style={{ color: '#64748b', marginLeft: '1rem' }}>生成的 SVG 可通过标准二维码扫描器正确解码（极致性能版）</div>
-        
-        <div style={{ color: '#22c55e', fontWeight: 'bold', marginTop: '0.5rem' }}>✅ kennytm-qrcode</div>
-        <div style={{ color: '#64748b', marginLeft: '1rem' }}>社区参考实现，验证通过</div>
-      </div>
-      
-      <div style={{ marginTop: '1rem', fontSize: '13px', color: '#64748b' }}>
-        验证命令: <code>cargo run --release --features validation --bin validate-qr -- "Hello World"</code>
-      </div>
-    </div>
-  );
-};
-
-export const PerformanceSummary = () => {
-  const comparisons = [
-    { name: 'vs kennytm-qrcode', rust: '8-10x', fast: '15-25x', color: '#22c55e' },
-    { name: 'vs Node.js', rust: '2-3x', fast: '4-6x', color: '#3b82f6' },
-    { name: 'vs Bun', rust: '1.5-2x', fast: '2-4x', color: '#f59e0b' },
-  ];
-
-  return (
-    <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '8px', marginTop: '1.5rem' }}>
-      <h3 style={{ marginTop: 0 }}>🚀 性能提升总结</h3>
-      <p style={{ color: '#64748b', marginBottom: '1rem' }}>
-        @veaba Rust 包相对于其他实现的性能提升：
-      </p>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-        {comparisons.map((item) => (
-          <div
-            key={item.name}
-            style={{
-              padding: '1rem',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              textAlign: 'center'
-            }}
-          >
-            <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '0.5rem' }}>{item.name}</div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
-              <div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dea584' }}>{item.rust}</div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>qrcode-rust</div>
-              </div>
-              <div style={{ color: '#e5e7eb' }}>|</div>
-              <div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>{item.fast}</div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>qrcode-fast</div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-本章节包含所有 QRCode 包的性能基准测试报告。
+<SvgFiveWayChart />
 
 ---
 
-## 🔬 交互式性能比较
+## 📊 性能数据总览
 
-使用下面的工具自定义比较不同包的性能：
+### Rust 实现（权威来源）
 
-<BenchmarkDashboard />
+来源：[`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)
 
----
+| 对比                                         | 速度提升        |
+| -------------------------------------------- | --------------- |
+| `@veaba/qrcode-fast` vs `kennytm-qrcode`     | **11x - 19x**   |
+| `@veaba/qrcode-rust` vs `kennytm-qrcode`     | **6x - 9x**     |
+| `@veaba/qrcode-fast` vs `@veaba/qrcode-rust` | **1.7x - 2.2x** |
 
-## 📊 快速统计
+- **平台**: Windows x64
+- **Rust**: rustc 1.89.0
+- **测量**: 三方端到端 SVG 生成，同机同进程，每用例预热 20 次 + 100 次取平均
+- **正确性**: 每个用例的产物都经 resvg 渲染 + rqrr 独立解码验证
 
-<QuickStats />
+### 前端包
 
----
-
-## 🚀 性能提升
-
-<PerformanceSummary />
-
----
-
-## ✅ SVG 验证
-
-<SVGValidationCard />
+`@veaba/qrcode-js`（纯 TypeScript）与 `@veaba/qrcode-wasm`（WebAssembly）对比见 [前端包性能比较](./front-bench)。
 
 ---
 
 ## 测试报告
 
-### [后端包性能比较](./backend-bench)
+### [后端 PK 对比](./backend-pk)
 
-比较 `@veaba/qrcode-node` 和 `@veaba/qrcode-bun` 的性能差异。
+Rust 三方（`qrcode-fast` / `qrcode-rust` / `kennytm-qrcode`）的端到端 SVG 性能对比，
+数据来源 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)。
 
-**主要发现**:
-- Bun 在单条生成上比 Node.js 快 19% - 81%
-- Bun 在批量生成上比 Node.js 快 43% - 171%
-- Bun 在 SVG 输出上比 Node.js 快 36% - 44%
+- `@veaba/qrcode-fast` 比 `kennytm-qrcode` 快 **9-19 倍**
+- `@veaba/qrcode-rust` 比 `kennytm-qrcode` 快 **6-9 倍**
+- `@veaba/qrcode-fast` 比 `@veaba/qrcode-rust` 快 **1.5-2.2 倍**
 
 ### [前端包性能比较](./front-bench)
 
-比较 `@veaba/qrcode-js` 和 `@veaba/qrcode-wasm` 的性能特点。
+比较 `@veaba/qrcode-js` 和 `@veaba/qrcode-wasm`：
 
-**主要内容**:
 - 纯 TypeScript vs WASM 实现的对比
 - 包体积和启动速度分析
 - 使用场景建议
-
-### [后端 PK 对比](./backend-pk)
-
-多包对比测试，包含 Node.js、Bun、Rust 实现。
-
-**主要发现**:
-- `@veaba/qrcode-fast` (Rust) 在单条生成上最快
-- `@veaba/qrcode-bun` 在批量生成上表现优秀
-- `@veaba/qrcode-rust` 比 `kennytm-qrcode` 快 8-10 倍
-- `@veaba/qrcode-fast` 比 `kennytm-qrcode` 快 15-25 倍
 
 ### [Rust 性能比较](./compare-rust)
 
 比较 `@veaba/qrcode-rust`、`@veaba/qrcode-fast` 与流行的 `kennytm-qrcode` 库。
 
-**主要发现**:
-- qrcode-rust 单条生成: ~54 µs (kennytm: ~455 µs) - 快 **8.4x**
-- qrcode-fast 单条生成: ~25 µs (kennytm: ~455 µs) - 快 **17.8x**
-- qrcode-fast 批量 100: ~2.1 ms (kennytm: ~34.1 ms) - 快 **16.3x**
-- 所有包均验证通过 ✅
+**主要发现**（来源 [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json)）:
+
+- qrcode-rust 端到端 SVG: 18.5-130.2 µs 区间，比 kennytm 快 **6-9x**
+- qrcode-fast 端到端 SVG: 18.5-64.4 µs 区间，比 kennytm 快 **9-19x**
+- qrcode-fast 比 qrcode-rust 快 **1.5-2.2x**
 
 ### [SVG 生成基准测试](./svg-benchmark)
 
-专门的 SVG 生成性能测试，包含验证结果。
+专门的 SVG 生成性能测试，数据来自 [`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)。
 
-**主要发现**:
-- `@veaba/qrcode-fast` 比 `kennytm-qrcode` 快 **20-22 倍**
-- `@veaba/qrcode-rust` 比 `kennytm-qrcode` 快 **8-10 倍**
-- 验证状态: 所有包在所有测试用例上均验证通过 ✅
-- 格式信息修复完成 (2026-02-02)
-
----
-
-## 测试环境
-
-- **平台**: Windows
-- **Node.js**: v20.19.4
-- **Bun**: 1.3.0
-- **Rust**: rustc 1.89.0
+该页另含一节**五方对比（Node / Bun / Rust）**：统一纠错级别 M 后测量
+`qrcode-fast` / `qrcode-rust` / `qrcode-bun` / `qrcode-node` / `kennytm-qrcode`。
+该节为独立测量，**不写入 `docs/public/`，也不与上述任何口径混用**。
 
 ---
 
 ## 运行基准测试
 
 ```bash
-# 运行所有后端基准测试
-pnpm run benchmark:backend
+# 运行 Rust 权威基准（三方端到端 SVG）
+cd bench/rust-tools
+cargo run --release --bin verify-speedup
 
-# 运行 Node.js 基准测试
-pnpm run benchmark:node
-
-# 运行 Bun 基准测试
-pnpm run benchmark:bun
-
-# 运行 Rust 基准测试
-pnpm run benchmark:rust
-
-# 运行前端测试
-pnpm run test:browser
-
-# 使用 rust-tools 验证 SVG
+# 使用 rust-tools 验证 SVG 可解码性
 cd bench/rust-tools
 cargo run --release --features validation --bin validate-qr -- "你的文本"
 
-# 运行三者对比测试
+# 全长度解码边界探测
+cd bench/rust-tools
+cargo run --release --features validation --bin scan-max
+
+# 运行包内 Criterion 微基准（口径与 verify-speedup 不同）
 cd packages/qrcode-rust
 cargo bench --bench comparison_bench
 ```
@@ -369,14 +96,13 @@ cargo bench --bench comparison_bench
 
 ## 数据文件
 
-基准测试的原始数据文件保存在：
+基准测试的原始数据文件保存在 `docs/public/`：
 
-- `/docs/public/benchmark_node_result.json` - Node.js 测试结果
-- `/docs/public/benchmark_bun_result.json` - Bun 测试结果
-- `/docs/public/backend_benchmark_pk.json` - PK 完整对比结果
-- `/docs/public/backend_benchmark_pk_summary.json` - PK 摘要结果
-- `/docs/public/benchmark_svg_rust.json` - SVG 生成测试原始数据
+| 文件                                                                                                                        | 覆盖范围                   | 单位      | 状态                                                 |
+| --------------------------------------------------------------------------------------------------------------------------- | -------------------------- | --------- | ---------------------------------------------------- |
+| [`benchmark_speedup_verified.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_speedup_verified.json) | Rust 三方端到端 SVG        | µs + 倍率 | ✅ **权威来源**                                      |
+| [`benchmark_svg_rust.json`](https://github.com/veaba/qrcodes/blob/main/docs/public/benchmark_svg_rust.json)                 | Rust 三方 SVG-only harness | µs        | ⚠️ 旧口径，部分用例 `valid: false`，勿与权威文件混用 |
 
 ---
 
-*最后更新*: 2026-02-02 (添加 qrcode-fast 对比，格式信息修复完成)
+_最后更新_: 2026-03-20（移除 Node.js / Bun 对比图表与其结论：该对比同时变动运行时与实现两个变量，且与仓库内其他抽样结论相反）

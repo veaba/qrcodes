@@ -70,9 +70,10 @@ name = "verify-kennytm"
 path = "src/bin/verify_kennytm.rs"
 
 # ==================== 报告工具 ====================
-[[bin]]
-name = "benchmark-report"
-path = "src/bin/benchmark_report.rs"
+# 注: 原 `benchmark-report` (src/bin/benchmark_report.rs) 已删除。
+# 它只 println! 硬编码的历史快照，不测量任何数据，且会随 JSON 更新而漂移。
+# 摘要请改为直接读取 docs/public/benchmark_speedup_verified.json，
+# 或运行 `verify-speedup` 获取本机实测值。
 
 [[bin]]
 name = "benchmark-kennytm"
@@ -81,6 +82,49 @@ path = "src/bin/benchmark_kennytm.rs"
 [[bin]]
 name = "benchmark-full"
 path = "src/bin/benchmark_full.rs"
+
+# ==================== 正确性校验工具 ====================
+# 这些工具保证「性能数字所对应的产物，确实是可用的二维码」。
+
+[[bin]]
+name = "validate-all"
+path = "src/bin/validate_all.rs"
+
+[[bin]]
+name = "validate-svg-dir"
+path = "src/bin/validate_svg_dir.rs"
+
+[[bin]]
+name = "scan-max"
+path = "src/bin/scan_max.rs"
+
+[[bin]]
+name = "check-min-version"
+path = "src/bin/check_min_version.rs"
+
+[[bin]]
+name = "verify-capacity-table"
+path = "src/bin/verify_capacity_table.rs"
+
+# ==================== 性能测量工具 ====================
+
+[[bin]]
+name = "verify-speedup"
+path = "src/bin/verify_speedup.rs"
+
+[[bin]]
+name = "five-way-rust"
+path = "src/bin/five_way_rust.rs"
+
+[[bin]]
+name = "five-way-rust-m"
+path = "src/bin/five_way_rust_m.rs"
+
+[[bin]]
+name = "five-way-rust-h"
+path = "src/bin/five_way_rust_h.rs"
+
+# ==================== 调试工具（续） ====================
 
 [[bin]]
 name = "debug-data"

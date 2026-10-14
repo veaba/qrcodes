@@ -2,18 +2,18 @@
 
 /**
  * Rust QRCode 包 SVG 性能基准测试
- * 
+ *
  * 对比以下包：
  * - kennytm-qrcode (社区参考)
  * - @veaba/qrcode-rust
  * - @veaba/qrcode-fast
- * 
+ *
  * 功能：
  * 1. 生成 SVG
  * 2. 验证二维码可扫描性 (使用 resvg + rqrr)
  * 3. 对比性能
  * 4. 生成 JSON 报告
- * 
+ *
  * 使用方法:
  *   node bench/svg-benchmark/rust.js          # 完整模式 (100次运行)
  *   node bench/svg-benchmark/rust.js --quick  # 快速模式 (10次运行)
@@ -27,7 +27,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../..');
 const rustToolsDir = path.join(rootDir, 'bench/rust-tools');
-const outputDir = path.join(rootDir, 'docs/bench/benchmark-output');
+const outputDir = path.join(rootDir, 'docs/public/bench/benchmark-output');
 const publicDir = path.join(rootDir, 'docs/public');
 
 // 颜色输出
@@ -76,7 +76,7 @@ function checkCargo() {
 // 构建 Rust 工具
 function buildRustTools() {
   log('🔨 构建 Rust 工具...', 'blue');
-  
+
   try {
     execSync('cargo build --release --features validation --bin benchmark-full', {
       cwd: rustToolsDir,
@@ -94,11 +94,11 @@ function buildRustTools() {
 // 运行基准测试
 function runBenchmark(quick = false) {
   log(`\n🚀 运行基准测试 (${quick ? '快速模式' : '完整模式'})...`, 'blue');
-  
+
   const args = quick ? ['--quick'] : [];
   // 添加输出目录参数
   args.push('--output-dir', outputDir);
-  
+
   try {
     const result = spawn(
       'cargo',
@@ -109,7 +109,7 @@ function runBenchmark(quick = false) {
         shell: true
       }
     );
-    
+
     return new Promise((resolve) => {
       result.on('close', (code) => {
         if (code === 0) {
@@ -131,20 +131,20 @@ function runBenchmark(quick = false) {
 // 显示结果
 function showResults() {
   logSection('测试结果');
-  
+
   // 检查输出文件
   if (!fs.existsSync(outputDir)) {
     log('❌ 输出目录不存在', 'red');
     return;
   }
-  
+
   const files = fs.readdirSync(outputDir);
   const svgFiles = files.filter(f => f.endsWith('.svg'));
   const reportFile = files.find(f => f === 'benchmark-report.json');
-  
+
   log('\n📁 输出目录:', 'cyan');
   log(`   ${outputDir}`);
-  
+
   if (svgFiles.length > 0) {
     log('\n📄 生成的 SVG 文件:', 'cyan');
     svgFiles.forEach(f => {
@@ -152,11 +152,11 @@ function showResults() {
       log(`   - ${f} (${(stats.size / 1024).toFixed(2)} KB)`);
     });
   }
-  
+
   if (reportFile) {
     log('\n📊 报告文件:', 'cyan');
     log(`   - ${reportFile}`);
-    
+
     // 复制 JSON 到 public 目录
     try {
       const srcPath = path.join(outputDir, reportFile);
@@ -166,17 +166,17 @@ function showResults() {
     } catch (e) {
       log('   (复制到 public 目录失败)', 'yellow');
     }
-    
+
     // 显示报告摘要
     try {
       const report = JSON.parse(fs.readFileSync(path.join(outputDir, reportFile), 'utf-8'));
-      
+
       if (report.test_cases && report.test_cases.length > 0) {
         log('\n📈 性能摘要 (平均时间):', 'bright');
         log('┌─────────────────────┬─────────────────────┬─────────────────────┬─────────────────────┐');
         log(`│ ${'测试用例'.padEnd(19)} │ ${'kennytm (µs)'.padStart(19)} │ ${'qrcode-rust (µs)'.padStart(19)} │ ${'qrcode-fast (µs)'.padStart(19)} │`);
         log('├─────────────────────┼─────────────────────┼─────────────────────┼─────────────────────┤');
-        
+
         report.test_cases.forEach(tc => {
           const name = (tc.name || 'Unknown').padEnd(19);
           const kennytm = tc.kennytm ? `${tc.kennytm.avg_time_us.toFixed(0)}`.padStart(19) : 'N/A'.padStart(19);
@@ -184,9 +184,9 @@ function showResults() {
           const fast = tc.qrcode_fast ? `${tc.qrcode_fast.avg_time_us.toFixed(0)}`.padStart(19) : 'N/A'.padStart(19);
           log(`│ ${name} │ ${kennytm} │ ${rust} │ ${fast} │`);
         });
-        
+
         log('└─────────────────────┴─────────────────────┴─────────────────────┴─────────────────────┘');
-        
+
         // 验证状态
         log('\n✅ 验证状态:', 'bright');
         report.test_cases.forEach(tc => {
@@ -207,21 +207,21 @@ async function main() {
   const args = process.argv.slice(2);
   const quickMode = args.includes('--quick');
   const skipBuild = args.includes('--skip-build');
-  
+
   logSection('Rust QRCode 性能基准测试');
   log('对比包:', 'cyan');
   log('  - kennytm-qrcode (社区参考)');
   log('  - @veaba/qrcode-rust');
   log('  - @veaba/qrcode-fast');
-  
+
   // 检查 cargo
   if (!checkCargo()) {
     log('❌ 未找到 Cargo，请安装 Rust', 'red');
     process.exit(1);
   }
-  
+
   ensureOutputDir();
-  
+
   // 构建
   if (!skipBuild) {
     const built = buildRustTools();
@@ -231,23 +231,23 @@ async function main() {
   } else {
     log('⏩ 跳过构建 (--skip-build)', 'yellow');
   }
-  
+
   // 运行测试
   const success = await runBenchmark(quickMode);
-  
+
   if (success) {
     showResults();
-    
+
     log('\n📁 输出位置:', 'cyan');
-    log(`  - SVG 文件: docs/bench/benchmark-output/`);
+    log(`  - SVG 文件: docs/public/bench/benchmark-output/`);
     log(`  - JSON 报告: docs/public/benchmark_svg_rust.json`);
-    
+
     log('\n💡 提示:', 'cyan');
     log('  - 使用浏览器打开 SVG 文件查看生成的二维码');
     log('  - 使用手机扫描验证二维码可扫描性');
     log('  - 查看 docs/public/benchmark_svg_rust.json 获取详细数据');
   }
-  
+
   process.exit(success ? 0 : 1);
 }
 

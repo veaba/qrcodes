@@ -2,11 +2,11 @@
 
 /**
  * JavaScript QRCode 包 SVG 性能基准测试
- * 
+ *
  * 对比:
  * - @veaba/qrcode-node
  * - @veaba/qrcode-bun
- * 
+ *
  * 使用方法:
  *   node bench/svg-benchmark/node-bun.js           # 运行所有 JS 测试
  *   node bench/svg-benchmark/node-bun.js --node    # 仅运行 Node.js 测试
@@ -20,7 +20,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '../..');
-const outputDir = path.join(rootDir, 'docs/bench/benchmark-output');
+const outputDir = path.join(rootDir, 'docs/public/bench/benchmark-output');
 
 // 颜色输出
 const colors = {

@@ -6,28 +6,32 @@
   "type": "module",
   "scripts": {
     "clean": "node scripts/clean.js",
-    "rsw": "rsw",
     "watch": "pnpm rsw watch",
     "build": "pnpm -r --filter './packages/*' run build",
     "build:js": "pnpm --filter @veaba/qrcode-js-shared build && pnpm --filter @veaba/qrcode-js build",
     "build:node": "pnpm --filter @veaba/qrcode-js-shared build && pnpm --filter @veaba/qrcode-node build",
     "build:wasm": "pnpm --filter @veaba/qrcode-wasm build",
     "build:rust": "pnpm --filter @veaba/qrcode-fast build && pnpm --filter @veaba/qrcode-rust build",
+    "rsw": "rsw",
     "test": "node scripts/test.js",
-    "test:unit": "vitest run",
-    "test:browser": "vitest run --config vitest.config.browser.ts",
-    "test:browser:ui": "HEADED=1 vitest --config vitest.config.browser.ts",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:unit": "node scripts/test.js",
+    "test:browser": "node scripts/test.js --browser",
+    "test:browser:ui": "node scripts/test.js --browser --headed",
+    "test:watch": "node scripts/test.js --watch",
+    "test:coverage": "node scripts/test.js --coverage && node scripts/fix-coverage-paths.js",
+    "test:coverage:bun": "bun test tests/qrcode-bun/ --coverage --coverage-reporter=lcov --coverage-dir=coverage/bun && node scripts/fix-coverage-paths.js --file coverage/bun/lcov.info",
     "test:shared": "node scripts/test.js --shared",
+    "test:js": "node scripts/test.js --js",
     "test:node": "node scripts/test.js --node",
-    "test:ts": "node scripts/test.js --ts",
+    "test:wasm": "node scripts/test.js --wasm",
+    "test:bun": "node scripts/test.js --bun",
     "benchmark": "node bench/scripts/run.js",
     "benchmark:backend": "node bench/scripts/run.js",
     "benchmark:node": "node bench/scripts/run.js --node",
     "benchmark:bun": "node bench/scripts/run.js --bun",
     "benchmark:rust": "node bench/scripts/run.js --rust",
     "bench:svg": "node bench/svg-benchmark/index.js",
+    "bench:svg:five-way": "node bench/svg-benchmark/collect-five-way.mjs",
     "bench:svg:rust": "node bench/svg-benchmark/rust.js",
     "bench:svg:rust:quick": "node bench/svg-benchmark/rust.js --quick",
     "bench:svg:rust:full": "node bench/svg-benchmark/rust.js",
@@ -52,7 +56,14 @@
     "ci:version": "changeset version && pnpm run version:sync && pnpm install",
     "ci:publish": "changeset publish",
     "clippy": "cargo clippy --fix",
-    "fmt:rust": "cargo fmt --all"
+    "fmt:rust": "cargo fmt --all",
+    "check:perf-claims": "node scripts/check-perf-claims.js",
+    "check:hygiene": "node scripts/check-repo-hygiene.js",
+    "check:rs-blocks": "node scripts/check-rs-blocks.js",
+    "check:all": "node scripts/check-perf-claims.js && node scripts/check-repo-hygiene.js && node scripts/check-rs-blocks.js",
+    "verify:speedup": "cargo run --release --bin verify-speedup --manifest-path bench/rust-tools/Cargo.toml",
+    "verify:capability": "cargo run --release --features validation --bin scan-max --manifest-path bench/rust-tools/Cargo.toml",
+    "verify:qr-validity": "cargo test --release --features validation --test qr_validity --manifest-path bench/rust-tools/Cargo.toml"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
@@ -68,7 +79,10 @@
     "vitest": "^2.1.9"
   },
   "dependencies": {
-    "rspress": "^1.47.1"
+    "@rspress/core": "^2.0.23"
   },
-  "packageManager": "pnpm@10.11.0"
+  "packageManager": "pnpm@12.11.2",
+  "workspaces": [
+    "packages/*"
+  ]
 }

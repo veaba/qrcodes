@@ -86,8 +86,8 @@ pnpm run benchmark:clean
 |------|--------|------|
 | `@veaba/qrcode-node` | Node.js | 稳定可靠，支持 PNG 输出 |
 | `@veaba/qrcode-bun` | Bun | 启动快，边缘计算友好 |
-| `@veaba/qrcode-fast` | Rust | 极致性能，比 kennytm 快 15-25 倍 |
-| `@veaba/qrcode-rust` | Rust | 功能完整，比 kennytm 快 8-10 倍 |
+| `@veaba/qrcode-fast` | Rust | 极致性能，比 kennytm 快 9-19 倍 |
+| `@veaba/qrcode-rust` | Rust | 功能完整，比 kennytm 快 6-9 倍 |
 | `kennytm-qrcode` | Rust | 社区参考实现 |
 
 **测试场景**：
@@ -142,9 +142,9 @@ pnpm run benchmark:clean
 
 #### 报告工具
 
-- `benchmark-report` - 显示基准测试报告
 - `benchmark-full` - 完整基准测试
 - `benchmark-kennytm` - kennytm 基准测试
+- `verify-speedup` - 三方实现同机实测（权威性能数据来源）
 
 ## 🔧 使用方法
 
@@ -165,8 +165,8 @@ npm run bench:bun
 
 **输出文件**：
 
-- `backend_benchmark_pk.json` - 完整测试结果
-- `backend_benchmark_pk_summary.json` - 摘要结果
+- `backend_benchmark_pk.json` - 完整测试结果（生成到 `docs/public/`，已不被文档引用）
+- `backend_benchmark_pk_summary.json` - 摘要结果（同上）
 
 ### Rust 工具使用
 
@@ -185,8 +185,8 @@ cargo run --release validate-qr
 # 对比不同实现
 cargo run --release compare-svgs
 
-# 查看完整报告
-cargo run --release benchmark-report
+# 本机实测三方实现性能（权威数据生成器）
+cargo run --release verify-speedup
 ```
 
 **工具示例**：
@@ -211,18 +211,17 @@ cargo run --release compare-svgs
 
 ```
 docs/public/                          # 网站可访问的结果
-├── benchmark_node_result.json        # Node.js 测试结果
-├── benchmark_bun_result.json         # Bun 测试结果
-├── benchmark_rust_result.json        # Rust 测试结果
-└── benchmark_summary.json            # 综合摘要
+├── benchmark_speedup_verified.json   # ✅ 唯一权威（Rust 三方端到端 SVG）
+├── benchmark_svg_rust.json           # ⚠️ 旧口径，勿与权威文件混用
+└── benchmark_summary.json            # 索引，本身不含测量结果
 
-docs/bench/benchmark-output/          # SVG 测试输出
+docs/public/bench/benchmark-output/          # SVG 测试输出
 ├── *.svg                             # 生成的 QRCode SVG
 └── *.json                            # 详细测试报告
 
 bench/                                # 本地测试结果
 ├── backend-benchmark/
-│   └── backend_benchmark_pk*.json
+│   └── backend_benchmark_pk*.json    # 仍会生成，但已不被文档引用
 └── frontend-benchmark/
     └── frontend_benchmark_result.json
 ```
@@ -253,25 +252,18 @@ cargo run --release validate-qr
 
 ## 🆚 性能对比总结
 
-### 单条生成性能
+> **权威数据**：[`docs/public/benchmark_speedup_verified.json`](../docs/public/benchmark_speedup_verified.json)
+> 本文件与各 README 中的性能倍数均以该 JSON 为准，请勿在各处单独维护数字。
+> 复现：`cd bench/rust-tools && cargo run --release --bin verify-speedup`
 
-| 包名 | 性能（ops/s） | 相对 kennytm |
-|------|--------------|--------------|
-| `qrcode-fast` | ~54,283 | 15-25x |
-| `qrcode-rust` | ~21,635 | 8-10x |
-| `qrcode-bun` | ~18,902 | - |
-| `qrcode-node` | ~12,078 | - |
-| `kennytm-qrcode` | ~2,200 | 1x |
+### Rust 三方对比（端到端 SVG 生成，实测）
 
-### SVG 生成性能
-
-| 包名 | 性能（ops/s） | 相对 kennytm |
-|------|--------------|--------------|
-| `qrcode-fast` | ~40,000 | 20-22x |
-| `qrcode-rust` | ~25,000 | 12-15x |
-| `qrcode-bun` | ~15,000 | - |
-| `qrcode-node` | ~8,000 | - |
-| `kennytm-qrcode` | ~1,800 | 1x |
+| 测试用例 | qrcode-fast | qrcode-rust | kennytm-qrcode | fast vs kennytm | rust vs kennytm |
+|---------|-------------|-------------|----------------|-----------------|-----------------|
+| Hello World (11B) | 18.5 µs | 32.1 µs | 210.4 µs | **11.4x** | **6.6x** |
+| Test QR Code 123 (17B) | 19.8 µs | 41.3 µs | 324.1 µs | **16.2x** | **7.8x** |
+| URL (31B) | 24.2 µs | 53.2 µs | 453.3 µs | **18.8x** | **8.5x** |
+| 长文本 (74B) | 64.4 µs | 130.2 µs | 826.2 µs | **12.5x** | **6.2x** |
 
 ## 🛠️ 故障排除
 

@@ -2,7 +2,7 @@
 
 > 🚀 高性能 QRCode 生成器 - 支持 Rust、WASM、Node.js、Bun 的多运行时解决方案
 >
-> 🔥 **比主流 Rust QRCode 库快 8-75 倍！**
+> 🔥 **比主流 Rust QRCode 库快 6-19 倍！**
 
 [![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
 [![WASM](https://img.shields.io/badge/WebAssembly-✓-654ff0.svg)](https://webassembly.org/)
@@ -13,7 +13,7 @@
 ## ✨ 特性
 
 - **🦀 Rust 原生核心** - 内存安全，极致性能
-- **🔥 极致性能** - 比 crates.io 最流行的 QRCode 库快 **8-75 倍**！
+- **🔥 极致性能** - 比 crates.io 最流行的 QRCode 库快 **6-19 倍**（实测，见[基准测试](docs/public/benchmark_speedup_verified.json)）
 - **⚡ 多运行时支持** - 浏览器(WASM)、Node.js、Bun、原生 Rust
 - **📦 智能缓存** - 内置 LRU 缓存，重复文本生成性能提升 10-100 倍
 - **🎨 丰富样式** - 圆角、渐变、Logo 区域、多种主题风格（微信、抖音、支付宝等）
@@ -25,8 +25,8 @@
 
 | 包名 | 环境 | 特点 | 适用场景 |
 |------|------|------|----------|
-| `@veaba/qrcode-fast` | Rust | 极致性能，比 kennytm 快 **37-75 倍** | 追求极致性能的 Rust 项目 |
-| `@veaba/qrcode-rust` | Rust | 功能完整，比 kennytm 快 **8-10 倍** | 标准 Rust 项目 |
+| `@veaba/qrcode-fast` | Rust | 极致性能，比 kennytm 快 **9-19 倍** | 追求极致性能的 Rust 项目 |
+| `@veaba/qrcode-rust` | Rust | 功能完整，比 kennytm 快 **6-9 倍** | 标准 Rust 项目 |
 | `@veaba/qrcode-wasm` | 浏览器 | Rust 编译为 WASM，性能最佳 | 前端生产环境 |
 | `@veaba/qrcode-js` | 浏览器 | 纯 JavaScript，即时启动 | 无需 WASM 的场景 |
 | `@veaba/qrcode-node` | Node.js | 服务端渲染，支持 PNG | Node.js 后端 |
@@ -152,35 +152,60 @@ const cyberpunk = generateCyberpunkStyleQRCode('Hello', 256);
 
 ### 🔥 与主流 Rust QRCode 库对比
 
-与 [kennytm/qrcode](https://github.com/kennytm/qrcode-rust) (crates.io 下载量最高的 QRCode 库) 的性能对比：
+与 [kennytm/qrcode](https://github.com/kennytm/qrcode-rust) (crates.io 下载量最高的 QRCode 库) 的性能对比。
+
+> **口径**：端到端 SVG 生成，同进程测量，100 次取平均，产物均通过独立解码验证。
+> 原始数据：[`docs/public/benchmark_speedup_verified.json`](docs/public/benchmark_speedup_verified.json)（本机 Rust 1.89.0，release）。
+> 复现：`cd bench/rust-tools && cargo run --release --bin verify-speedup`
 
 #### @veaba/qrcode-fast（极致性能版）
 
-| 测试项 | @veaba/qrcode-fast | kennytm-qrcode | 速度提升 |
+| 测试用例 | @veaba/qrcode-fast | kennytm-qrcode | 速度提升 |
 |--------|-------------------|----------------|----------|
-| **单条生成** | ~18.4 µs | ~688.9 µs | **🔥 37x 更快** |
-| **SVG 生成 (Simple)** | ~10.8 µs | ~815.8 µs | **🔥 75x 更快** |
-| **SVG 生成 (Complex)** | ~18.4 µs | ~688.9 µs | **🔥 37x 更快** |
-| **纠错级别 H** | ~21.1 µs | ~446.2 µs | **🔥 21x 更快** |
+| Hello World (11B) | **18.5 µs** | 210.4 µs | **11.4x** |
+| Test QR Code 123 (17B) | **19.8 µs** | 324.1 µs | **16.2x** |
+| URL (31B) | **24.2 µs** | 453.3 µs | **18.8x** |
+| 长文本 (74B) | **64.4 µs** | 826.2 µs | **12.5x** |
 
 #### @veaba/qrcode-rust（功能完整版）
 
-| 测试项 | @veaba/qrcode-rust | kennytm-qrcode | 速度提升 |
+| 测试用例 | @veaba/qrcode-rust | kennytm-qrcode | 速度提升 |
 |--------|-------------------|----------------|----------|
-| **单条生成** | ~51.0 µs | ~438.3 µs | **🔥 8.6x 更快** |
-| **批量 100 条** | ~4.01 ms | ~32.13 ms | **🔥 8.0x 更快** |
-| **纠错级别 L** | ~29.0 µs | ~306.5 µs | **🔥 10.6x 更快** |
-| **纠错级别 H** | ~42.0 µs | ~446.2 µs | **🔥 10.6x 更快** |
+| Hello World (11B) | **32.1 µs** | 210.4 µs | **6.6x** |
+| Test QR Code 123 (17B) | **41.3 µs** | 324.1 µs | **7.8x** |
+| URL (31B) | **53.2 µs** | 453.3 µs | **8.5x** |
+| 长文本 (74B) | **130.2 µs** | 826.2 µs | **6.2x** |
+
+#### 与自身对比
+
+| 对比 | 速度提升 |
+|------|----------|
+| `qrcode-fast` vs `qrcode-rust` | **1.5 - 2.2x** |
+
+> ✅ **能力范围**：两个 Rust 包现已覆盖 **全部 40 个版本，H 级下最大 1273 字节**（即 QR 标准上限），
+> 与 JS 实现能力一致。此前存在的长度限制与实例复用缺陷均已修复：
+> 版本选择上限 `take(10)`、头部重复计入、`RS_BLOCK_TABLE` v15-H 占位符、
+> `qrcode-rust` 缺少 v7+ 版本信息、`qrcode-fast` 对齐图案坐标表越界。
+> 详见 [`docs/public/benchmark_speedup_verified.json`](docs/public/benchmark_speedup_verified.json) 的 `capability` 与 `fixed_defects`。
+> 复现：`cargo run --release --features validation --bin scan-max --manifest-path bench/rust-tools/Cargo.toml`
 
 ### 运行时性能对比
 
-| 运行时 | 单条生成 (ops/s) | SVG 输出 (ops/s) | 特点 |
-|--------|-----------------|-----------------|------|
-| 🦀 Rust (qrcode-fast) | **54,283** | **92,486** | 极致性能 |
-| 🦀 Rust (qrcode-rust) | 21,635 | 28,780 | 功能完整 |
-| 🥟 Bun | 18,902 | 18,003 | 启动快，批量优 |
-| 🟢 Node.js | 12,078 | 10,150 | 生态丰富 |
-| 🌐 WASM (浏览器) | ~15,000 | ~15,000 | 前端最快 |
+> ⚠️ 下表中的 Rust 与 JS 数字来自**不同的基准测试**（不同机器、不同输入、不同口径），
+> 仅可作为各自量级的参考，**不能直接横向比较**。
+
+| 运行时 | 数据来源 | 参考性能 | 备注 |
+|--------|---------|---------|------|
+| 🦀 Rust (qrcode-fast) | `benchmark_speedup_verified.json` | 18.5-64.4 µs / 条 | 端到端 SVG |
+| 🦀 Rust (qrcode-rust) | `benchmark_speedup_verified.json` | 32.1-130.2 µs / 条 | 端到端 SVG |
+| 🥟 Bun | — | 未统一测量 | 待补充 |
+| 🟢 Node.js | — | 未统一测量 | 待补充 |
+| 🌐 WASM (浏览器) | — | 未统一测量 | 待补充 |
+
+> 详细对照见 [`bench/README.md`](bench/README.md)。
+> 历史文档中的 54,283 / 92,486 ops/s 等数字来源于一次会生成伪数据的构建，已作废。
+> Node.js 与 Bun 的对比已删除：两者是**不同的实现**，该对比同时变动「运行时」与「实现」
+> 两个变量，无法归因（另见 [`docs/bench/index.mdx`](docs/bench/index.mdx)）。
 
 ### 运行基准测试
 

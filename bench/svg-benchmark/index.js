@@ -2,11 +2,11 @@
 
 /**
  * QRCode SVG 生成性能基准测试 (综合脚本)
- * 
+ *
  * 对比所有包：
  * - Rust: kennytm-qrcode, @veaba/qrcode-rust, @veaba/qrcode-fast
  * - JS: @veaba/qrcode-node, @veaba/qrcode-bun
- * 
+ *
  * 使用方法:
  *   pnpm bench:svg              # 运行所有测试
  *   pnpm bench:svg:rust         # 仅运行 Rust 测试
@@ -125,7 +125,7 @@ async function main() {
   logSection('测试完成');
 
   log('\n📁 输出目录:', 'cyan');
-  log('  - SVG 文件: docs/bench/benchmark-output/');
+  log('  - SVG 文件: docs/public/bench/benchmark-output/');
   log('  - JSON 报告: docs/public/benchmark_svg_rust.json');
 
   log('\n💡 提示:', 'cyan');

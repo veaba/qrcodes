@@ -55,26 +55,33 @@ jobs:
       - name: Build shared package
         run: pnpm --filter @veaba/qrcode-js-shared build
 
-      - name: Run unit tests
-        run: pnpm test:unit
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.3.0'
 
-      - name: Run Bun tests
-        run: pnpm test -- --bun
+      # `pnpm test:unit` is now the single full-suite entry point and includes
+      # the qrcode-bun suite, so Bun must be on PATH before this step. The
+      # suite is skipped (not failed) when Bun is absent.
+      - name: Run unit tests
+        run: pnpm test:unit
 
       - name: Generate coverage report
         if: matrix.os == 'ubuntu-latest'
         run: pnpm test:coverage
 
+      # The qrcode-bun suite runs under Bun, which does not report to the v8
+      # provider — `packages/qrcode-bun/src/index.ts` is excluded from the v8
+      # report (see vitest.config.ts) and measured here instead.
+      - name: Generate Bun coverage report
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm test:coverage:bun
+
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage/lcov.info
+          files: ./coverage/lcov.info,./coverage/bun/lcov.info
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -218,10 +225,55 @@ jobs:
   # ========================================
   # Type Check
   # ========================================
+  perf-claims:
+    name: Performance Claim Consistency
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 防止互相矛盾的性能宣称再次出现（历史上曾同时存在三套不同的倍数）。
+      # 单一事实来源: docs/public/benchmark_speedup_verified.json
+      - name: Check performance claims
+        run: node scripts/check-perf-claims.js
+
+  repo-hygiene:
+    name: Repository Hygiene
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 执行 GOVERNANCE.md §1 / §4 / §5：
+      #   禁止调试脚本、生成资产、一次性探针入库
+      #   agent 文档的相对链接必须有效
+      #   docs/public/ 数据文件必须声明 _status（且 authoritative 唯一）
+      #   新增行必须为 LF
+      - name: Check repository hygiene
+        run: node scripts/check-repo-hygiene.js
+
+      # 校验 JS 与 Rust 两份 RS_BLOCK_TABLE（各 160 项）是否符合 QR 标准。
+      # 该表决定纠错分块方式，错了会导致对应版本的二维码无法解码。
+      - name: Check RS block tables
+        run: node scripts/check-rs-blocks.js
+
   type-check:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4

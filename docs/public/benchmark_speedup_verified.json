@@ -1,0 +1,166 @@
+{
+  "_status": "authoritative",
+  "_comment": "本文件是整个仓库性能数字的唯一权威来源 (single source of truth)。所有 README 与文档中的倍数一律引用此处数值。",
+  "schema_version": 2,
+  "generated_by": "cargo run --release --bin verify-speedup (bench/rust-tools)；末尾三个用例由 five-way-rust-h 生成",
+  "generated_at": "2026-03-20",
+  "methodology": {
+    "metric": "端到端 SVG 生成 (make_code + get_svg/render)，同一进程内三方实现依次测量",
+    "runs_per_case": 100,
+    "warmup_runs": 20,
+    "statistic": "算术平均值",
+    "correctness_check": "resvg 渲染 + rqrr 独立解码，必须还原为原始文本",
+    "caveat": "仅代表本机结果；不同 CPU/编译器版本会有差异。倍数应视为量级参考，而非精确承诺。",
+    "ec_level": "H (30%)。注意 kennytm-qrcode 默认 M 级，本文件实测中已按各自默认调用；因此同一文本下 veaba 系与 kennytm 的模块数不同（如 115 字节: 57 vs 45）。",
+    "svg_artifacts": "对应用例的 SVG 落盘于 docs/public/bench/svg/（命名 <前缀>_<用例>_<序号>.svg，前缀 fast/rust/kennytm；该目录已 gitignore，供人工扫码验证）。"
+  },
+  "environment": {
+    "platform": "windows",
+    "arch": "x64",
+    "rustc": "1.89.0",
+    "profile": "release (opt-level 3)"
+  },
+  "results": [
+    {
+      "case": "Simple",
+      "text": "Hello World",
+      "bytes": 11,
+      "avg_us": { "qrcode_fast": 18.5, "qrcode_rust": 32.1, "kennytm": 210.4 },
+      "speedup": { "fast_vs_kennytm": 11.4, "rust_vs_kennytm": 6.6, "fast_vs_rust": 1.74 }
+    },
+    {
+      "case": "Complex",
+      "text": "Test QR Code 123",
+      "bytes": 17,
+      "avg_us": { "qrcode_fast": 19.8, "qrcode_rust": 41.3, "kennytm": 324.1 },
+      "speedup": { "fast_vs_kennytm": 16.2, "rust_vs_kennytm": 7.8, "fast_vs_rust": 2.08 }
+    },
+    {
+      "case": "URL",
+      "text": "https://github.com/veaba/qrcodes",
+      "bytes": 31,
+      "avg_us": { "qrcode_fast": 24.2, "qrcode_rust": 53.2, "kennytm": 453.3 },
+      "speedup": { "fast_vs_kennytm": 18.8, "rust_vs_kennytm": 8.5, "fast_vs_rust": 2.20 }
+    },
+    {
+      "case": "Long",
+      "text": "Email: test@example.com | Phone: +1-234-567-8900 | Address: 123 Main St",
+      "bytes": 74,
+      "avg_us": { "qrcode_fast": 64.4, "qrcode_rust": 130.2, "kennytm": 826.2 },
+      "speedup": { "fast_vs_kennytm": 12.5, "rust_vs_kennytm": 6.2, "fast_vs_rust": 2.02 }
+    },
+    {
+      "_note": "以下三个用例由 five-way-rust-h 生成，与上方四例同一口径（端到端 SVG、H 级、预热 20 + 100 次取平均、resvg+rqrr 解码验证）。",
+      "case": "HelloWorld",
+      "text": "hello world",
+      "bytes": 11,
+      "avg_us": { "qrcode_fast": 21.5, "qrcode_rust": 35.5, "kennytm": 214.8 },
+      "median_us": { "qrcode_fast": 18.0, "qrcode_rust": 30.0, "kennytm": 209.5 },
+      "p95_us": { "qrcode_fast": 27.8, "qrcode_rust": 62.8, "kennytm": 268.1 },
+      "speedup": { "fast_vs_kennytm": 10.0, "rust_vs_kennytm": 6.1, "fast_vs_rust": 1.65 }
+    },
+    {
+      "case": "SiteUrl",
+      "text": "https://qrcodes.veaba.me/",
+      "bytes": 25,
+      "avg_us": { "qrcode_fast": 37.0, "qrcode_rust": 54.5, "kennytm": 343.6 },
+      "median_us": { "qrcode_fast": 36.1, "qrcode_rust": 52.7, "kennytm": 328.7 },
+      "p95_us": { "qrcode_fast": 56.0, "qrcode_rust": 70.6, "kennytm": 459.1 },
+      "speedup": { "fast_vs_kennytm": 9.3, "rust_vs_kennytm": 6.3, "fast_vs_rust": 1.47 }
+    },
+    {
+      "case": "CjkLong",
+      "text": "多引擎 QRCodes，高性能 QRCode 库，支持 WASM、Node.js、Bun 和 Rust 的多运行时 QRCode 解决方案",
+      "bytes": 115,
+      "avg_us": { "qrcode_fast": 91.9, "qrcode_rust": 180.1, "kennytm": 1302.5 },
+      "median_us": { "qrcode_fast": 87.2, "qrcode_rust": 174.2, "kennytm": 1250.1 },
+      "p95_us": { "qrcode_fast": 121.4, "qrcode_rust": 219.7, "kennytm": 1761.3 },
+      "speedup": { "fast_vs_kennytm": 14.2, "rust_vs_kennytm": 7.2, "fast_vs_rust": 1.96 }
+    }
+  ],
+  "headline": {
+    "qrcode_fast_vs_kennytm": "9-19x",
+    "qrcode_rust_vs_kennytm": "6-9x",
+    "qrcode_fast_vs_qrcode_rust": "1.5-2.2x",
+    "_basis": "由 results[*].speedup 的实测极值取整（7 个用例）。原四用例单独看为 11-19x / 6-9x / 1.7-2.2x；新增三个用例后下界被拉宽。"
+  },
+  "capability": {
+    "note": "两个 Rust 包现已与 JS 实现对齐，均可覆盖全部 40 个版本。",
+    "max_decodable_bytes_H": 1273,
+    "max_version": 40,
+    "verified_by": "scan-max (1..1400 字节逐点扫描 + resvg/rqrr 独立解码)",
+    "_history": "2026-03-20 之前，qrcode-fast 上限 119 字节、qrcode-rust 上限 56 字节，且 qrcode-rust 复用实例必错。以下四项缺陷已全部修复。"
+  },
+  "fixed_defects": [
+    {
+      "package": "qrcode-rust-shared",
+      "issue": "get_min_version 用 take(10) 把版本上限锁在 Version 10；且额外 +2 重复计入头部（容量表已含头部），使每个边界比标准保守 2 字节。",
+      "fixed": "放开至全表 40 个版本；移除 +2。现与 QR 标准 160/160 项逐项吻合。",
+      "verified": "verify-capacity-table (156/160 精确吻合，余 4 项为探测上限)"
+    },
+    {
+      "package": "qrcode-rust-shared",
+      "issue": "RS_BLOCK_TABLE 的 v15-H 为占位符 [11,36,12,0,0,0]，数据码字仅 132，标准应为 223。",
+      "fixed": "改为 [11,36,12,7,37,13]。",
+      "verified": "scripts/check-rs-blocks.js (160/160 项与 QR 标准一致)"
+    },
+    {
+      "package": "qrcode-js-shared",
+      "issue": "同上：v15-H 为 [11,36,12]，缺少 [7,37,13]。",
+      "fixed": "同步修正，JS 与 Rust 现完全一致。",
+      "verified": "scripts/check-rs-blocks.js (160/160)"
+    },
+    {
+      "package": "qrcode-rust",
+      "issue": "setup_type_number 为空实现（'简化版本'），v7 及以上缺少 18 位版本信息，解码器无法判定版本。",
+      "fixed": "实现 BCH(18,6) 版本信息写入（生成多项式 0x1F25），右上/左下各一份。",
+      "verified": "probe-version (v7+ 全部可解码)"
+    },
+    {
+      "package": "qrcode-rust",
+      "issue": "make_impl 仅在 type_number == 0 时计算版本号，复用实例编码更长文本会沿用旧版本号。",
+      "fixed": "make_code 中重置 type_number 与 data_cache。",
+      "verified": "tests/qr_validity.rs::qrcode_rust_instance_reuse_decodes"
+    },
+    {
+      "package": "qrcode-fast",
+      "issue": "get_pattern_position 使用本地表，`_ => [6,30,54]` 使所有 v11+ 版本误用 v11 坐标（v12 应为 [6,32,58]），且最多只能表达 3 个坐标。",
+      "fixed": "改用共享的权威 PATTERN_POSITION_TABLE（覆盖 v1-v40）。",
+      "verified": "probe-version (v12+ 全部可解码)"
+    },
+    {
+      "package": "qrcode-bun",
+      "issue": "setupTypeNumber() 是空实现（仅含 `// 简化版本` 注释），v7+ 缺少 18 位版本信息，解码器无法判定版本，报 DataEcc。59 字节（v7）起失败。",
+      "fixed": "实现 BCH(18,6) 版本信息写入（生成多项式 G18 = 0x1F25），右上/左下各一份，与 qrcode-js-shared / qrcode-fast 既有实现一致。",
+      "verified": "validate-svg-dir + validate-external-svg（独立 resvg+rqrr 解码）；逐版本扫描 v7-v40 全部通过"
+    },
+    {
+      "package": "qrcode-js-shared, qrcode-bun",
+      "issue": "PATTERN_POSITION_TABLE 含 41 条记录（应为 40），多出一条重复的 [6,28,50,72,98]，导致 v22 及以后每个版本都取到下一个版本的坐标；表内 v40 实为 v39 的值。表现为 qrcode-node 在 v22+（440 字节起）、qrcode-bun 在 v23+ 不可解码。该表在两个包中各有一份副本，均有此缺陷。",
+      "fixed": "删除重复行，并按 QR 标准（ISO 18004 Annex E）校正 v22-v40 坐标；两处副本同步修复。现 40 个版本与标准逐项吻合。",
+      "verified": "对照 ISO 18004 Annex E 逐版本比对（40/40 吻合）；validate-svg-dir 全绿；v7-v40 扫描 node/bun 24/24 通过"
+    }
+  ],
+  "deprecated_claims": [
+    {
+      "claim": "比 kennytm 快 37-75 倍",
+      "status": "retracted",
+      "reason": "来源于一个「生成伪数据、仅用于性能测试」的构建，产物并非真实二维码；现实现已修正，真实倍数为 9-19x（2026-03-20 新增三用例后的全量极值；当时四用例口径为 11-19x）。"
+    },
+    {
+      "claim": "比 kennytm 快 15-25 倍",
+      "status": "retracted",
+      "reason": "与实测 9-19x 不符（2026-03-20 新增三用例后的全量极值；当时四用例口径为 11-19x）。"
+    },
+    {
+      "claim": "比 kennytm 快 3 倍",
+      "status": "superseded",
+      "reason": "qrcode-fast README 的旧值，低估了当前实现。"
+    },
+    {
+      "claim": "比 kennytm 快 11-19 倍（qrcode-fast）/ 1.7-2.2 倍（fast vs rust）",
+      "status": "superseded",
+      "reason": "该区间仅由原四个用例（11/17/31/74 字节）得出。2026-03-20 新增三个用例（hello world 11B、站点 URL 25B、中文长文本 115B）后，实测极值拉宽为 9-19x / 1.5-2.2x（fast/rust 最低 1.47 出现在 SiteUrl）。旧区间不再是全量极值，已由 headline 取代。"
+    }
+  ]
+}

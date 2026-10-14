@@ -1,8 +1,10 @@
 {
+  "_status": "index",
+  "_note": "仅索引若干基准数据文件，本身不含测量结果。所列文件各自声明状态，引用时请以它们的 _status 为准；权威数据见 benchmark_speedup_verified.json。",
   "timestamp": "2026-02-08T16:51:39.512Z",
   "files": [
-    "backend_benchmark_pk.json",
-    "backend_benchmark_pk_summary.json",
+    "benchmark_speedup_verified.json",
+    "benchmark_svg_rust.json",
     "benchmark_rust_result.json"
   ]
 }

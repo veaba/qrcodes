@@ -1,5 +1,14 @@
 # qrcodes
 
+> ⚠️ **强制约束**：本仓库有[章程（GOVERNANCE.md）](../../GOVERNANCE.md)。
+> 新增/修改/删除任何文件之前，先读 [`repo-governance`](./repo-governance/SKILL.md) skill。
+>
+> 核心红线：
+> - 不得留下一次性脚本、探测程序、生成资产
+> - 不得新建未在章程 §2 声明的目录
+> - 提交前 `cargo fmt` / `cargo clippy -D warnings` / `cargo test` 必须通过
+> - 涉及编码逻辑的改动必须用独立解码器验证产物，不能只看"图长得像二维码"
+
 ## 环境介绍
 
 当前宿主机环境：
@@ -110,7 +119,7 @@ pnpm bench:svg:rust
 ```
 
 测试输出：
-- **SVG 文件**: `docs/bench/benchmark-output/*.svg`
+- **SVG 文件**: `docs/public/bench/benchmark-output/*.svg`
 - **JSON 报告**: `docs/public/benchmark_svg_rust.json`
 - **测试报告**: `docs/bench/svg-benchmark.mdx`
 
@@ -174,27 +183,34 @@ npx tsx index-fast.ts
 
 #### Rust 包对比（@veaba/qrcode-rust vs kennytm-qrcode）
 
-| 测试项 | @veaba/qrcode-rust | kennytm-qrcode | 速度提升 |
+| 测试用例 | @veaba/qrcode-rust | kennytm-qrcode | 速度提升 |
 |--------|-------------------|----------------|----------|
-| 单条生成 | ~54.4 µs | ~454.6 µs | **8.4x** |
-| 批量 100 条 | ~4.21 ms | ~34.12 ms | **8.1x** |
-| 纠错级别 L | ~29.6 µs | ~323.9 µs | **10.9x** |
+| Hello World (11B) | ~32.1 µs | ~210.4 µs | **6.6x** |
+| Test QR Code 123 (17B) | ~41.3 µs | ~324.1 µs | **7.8x** |
+| URL (31B) | ~53.2 µs | ~453.3 µs | **8.5x** |
+| 长文本 (74B) | ~130.2 µs | ~826.2 µs | **6.2x** |
 
-**结论**: `@veaba/qrcode-rust` 比 `kennytm-qrcode` 快 **8-10 倍**
+**结论**: `@veaba/qrcode-rust` 比 `kennytm-qrcode` 快 **6-9 倍**
+
+> 权威数据: `docs/public/benchmark_speedup_verified.json`（端到端 SVG 生成，100 次平均）
+> 复现: `cd bench/rust-tools && cargo run --release --bin verify-speedup`
 
 #### SVG 验证结果
 
-- ✅ `@veaba/qrcode-rust` - 生成的 SVG 可通过标准二维码扫描器正确解码（简单文本）
-- ✅ `@veaba/qrcode-fast` - 生成的 SVG 可通过标准二维码扫描器正确解码（简单文本）
-- ⚠️ 复杂文本（版本 3+）存在 Reed-Solomon 纠错码问题
+- ✅ `@veaba/qrcode-rust` - 生成的 SVG 可通过标准二维码扫描器正确解码
+- ✅ `@veaba/qrcode-fast` - 生成的 SVG 可通过标准二维码扫描器正确解码
+- ✅ 两个 Rust 包均覆盖 Version 1-40，H 级别最大可解码长度 1273 字节（QR 标准上限），长文本与实例复用均已验证
 
 #### SVG 生成性能
 
-| 包 | 相对速度 | 验证状态 |
+> 权威口径：端到端 SVG 生成，同进程 100 次平均，产物经独立解码验证。
+> 数据来源 `docs/public/benchmark_speedup_verified.json`，复现 `cargo run --release --bin verify-speedup`。
+
+| 包 | 相对 kennytm 的速度 | 验证状态 |
 |---|---------|---------|
 | `kennytm-qrcode` | 1x (基准) | ✅ 全部通过 |
-| `@veaba/qrcode-rust` | ~8-9x | ⚠️ 部分失败 |
-| `@veaba/qrcode-fast` | **~20-22x** | ⚠️ 部分失败 |
+| `@veaba/qrcode-rust` | 快 6-9 倍 | ✅ 全长度通过（Version 1-40，最大 1273 字节 @ H） |
+| `@veaba/qrcode-fast` | **快 9-19 倍** | ✅ 全长度通过（Version 1-40，最大 1273 字节 @ H） |
 
 ### 输出文件位置
 
@@ -358,6 +374,7 @@ cargo run --release --features validation --bin validate-qr -- "Hello World"
 - 输出路径规范
   - SVG 文件: `docs/bench/benchmark-output/`
   - JSON 报告: `docs/public/benchmark_svg_rust.json`
-- 发现的问题
+- 当时发现的问题（**均已于 2026-03-20 修复**）
   - `@veaba/qrcode-rust` 和 `@veaba/qrcode-fast` 在复杂文本上验证失败
   - Reed-Solomon 纠错码需要修复
+  - 现状：两个包均覆盖 Version 1-40、H 级别最大可解码长度 1273 字节，产物经 rqrr 独立解码验证（详见 `docs/public/benchmark_speedup_verified.json` 的 `fixed_defects`）
