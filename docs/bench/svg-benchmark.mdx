@@ -197,8 +197,13 @@ docs/public/bench/svg/<前缀>_<用例>_<序号>.svg
 #### 自动校验这些 SVG（推荐，替代人工逐个扫码）
 
 ```bash
-cargo run --release --features validation --bin validate-svg-dir
-# 或指定目录
+# 最省事：生成 + 校验一条命令跑完
+pnpm run bench:svg:gen
+
+# 只校验（不重新生成）
+pnpm run bench:svg:validate
+
+# 底层工具：直接指定目录
 cargo run --release --features validation --bin validate-svg-dir -- <目录>
 ```
 
@@ -206,7 +211,8 @@ cargo run --release --features validation --bin validate-svg-dir -- <目录>
 覆盖全部五方（`validate-all` 仅覆盖 Rust 三方）。全部通过退出码 0，任一失败退出码 1。
 目录不存在时优雅跳过（该目录不入库，他人 clone 后本就没有）。
 
-> 注意路径要带 `--features validation`，否则解码函数会返回「未启用验证特性」。
+> 注意直接调用 `cargo run` 时要带 `--features validation`，否则解码函数会返回「未启用验证特性」。
+> 走 `pnpm run bench:svg:validate` 则已包含该参数。
 
 #### ✅ 已修复缺陷：两个实现曾产出不可解码的二维码
 
@@ -292,10 +298,28 @@ bun  bench/svg-benchmark/five-way-js.mjs --target=bun  --ec=M
 
 ### 生成权威口径数据 + SVG 落盘（H 级）
 
+**推荐：一条命令跑完「五方生成 + 独立解码校验」**
+
+```bash
+pnpm run bench:svg:gen          # 每实现每用例落 5 次，末尾自动校验
+pnpm run bench:svg:gen:all      # 每实现每用例落 100 次
+pnpm run bench:svg:gen -- --keep        # 保留旧文件，不先清空
+pnpm run bench:svg:gen -- --skip-bun    # 未安装 Bun 时
+pnpm run bench:svg:gen -- --no-validate # 只生成不校验
+```
+
+校验全部通过退出码 0；任一 SVG 无法解码则退出码 1（便于接入 CI）。
+只做校验（不重新生成）：
+
+```bash
+pnpm run bench:svg:validate
+```
+
+**分步执行（需要单独跑某一方时）**
+
 ```bash
 # Rust 三方：写入权威三用例数据，并落盘 SVG 到 docs/public/bench/svg/
 cargo run --release --bin five-way-rust-h --manifest-path bench/rust-tools/Cargo.toml
-
 # 落盘全部 100 次（默认只落前 5 次）
 cargo run --release --bin five-way-rust-h --manifest-path bench/rust-tools/Cargo.toml -- --save-all
 
@@ -303,6 +327,10 @@ cargo run --release --bin five-way-rust-h --manifest-path bench/rust-tools/Cargo
 node bench/svg-benchmark/five-way-js.mjs --target=node --ec=H --save-svg
 bun  bench/svg-benchmark/five-way-js.mjs --target=bun  --ec=H --save-svg
 ```
+
+> ⚠️ Node 侧按路径导入 `packages/qrcode-node/dist/index.js`。
+> 若改动了 `qrcode-js-shared`，需先重新构建，否则测到的仍是旧产物：
+> `pnpm --filter @veaba/qrcode-js-shared build && pnpm --filter @veaba/qrcode-node build`
 
 ## 运行基准测试
 
