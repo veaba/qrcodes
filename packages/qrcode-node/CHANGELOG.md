@@ -1,5 +1,17 @@
 # @veaba/qrcode-node
 
+## 0.3.0
+
+### Minor Changes
+
+- 57643d3: release: v0.3.0
+  - feat: improve benchmark criteria and fix QR code rendering errors across versions
+
+### Patch Changes
+
+- Updated dependencies [57643d3]
+  - @veaba/qrcode-js-shared@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
