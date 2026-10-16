@@ -76,8 +76,9 @@ jobs:
       # ========================================
       # Publish Rust Crates to crates.io
       # ========================================
-      # 由 changesets 管理版本号，始终使用新版本发布
-      # 如果版本已存在，cargo publish 会报错，我们忽略错误继续
+      # 由 changesets 管理版本号。
+      # 只有"该版本已存在于 crates.io"才跳过；其余错误（如 403 认证失败、
+      # 依赖解析失败）必须让 job 失败，否则发布失败会被误报为成功。
 
       - name: Get versions from package.json
         id: versions
@@ -86,41 +87,50 @@ jobs:
           echo "qrcode_rust=$(node -p "require('./packages/qrcode-rust/package.json').version")" >> $GITHUB_OUTPUT
           echo "qrcode_fast=$(node -p "require('./packages/qrcode-fast/package.json').version")" >> $GITHUB_OUTPUT
 
-      # 发布 qrcode-rust-shared，如果版本已存在则忽略
+      # 若版本已存在于 crates.io 则跳过，否则发布。
+      # 注意 1：必须带 User-Agent，否则 crates.io 返回 403，会被误判为"不存在"。
+      # 注意 2：不使用 `--token`（cargo 已弃用），改用 CARGO_REGISTRY_TOKEN 环境变量。
       - name: Publish qrcode-rust-shared to crates.io
-        continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CRATE: qrcode-rust-shared
+          VERSION: ${{ steps.versions.outputs.qrcode_rust_shared }}
         run: |
-          echo "📦 Publishing qrcode-rust-shared v${{ steps.versions.outputs.qrcode_rust_shared }}..."
-          cargo publish -p qrcode-rust-shared --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1 || {
-            echo "⚠️ May already exist, continuing..."
-          }
+          if curl -sf -A "veaba/qrcodes release-ci" "https://crates.io/api/v1/crates/$CRATE/$VERSION" > /dev/null; then
+            echo "✅ $CRATE v$VERSION 已存在于 crates.io，跳过"
+          else
+            echo "📦 Publishing $CRATE v$VERSION..."
+            cargo publish -p "$CRATE" --registry crates-io
+          fi
 
       - name: Wait for crates.io index
         run: sleep 30
 
-      # 发布 qrcode-rust，如果版本已存在则忽略
       - name: Publish qrcode-rust to crates.io
-        continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CRATE: qrcode-rust
+          VERSION: ${{ steps.versions.outputs.qrcode_rust }}
         run: |
-          echo "📦 Publishing qrcode-rust v${{ steps.versions.outputs.qrcode_rust }}..."
-          cargo publish -p qrcode-rust --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1 || {
-            echo "⚠️ May already exist, continuing..."
-          }
+          if curl -sf -A "veaba/qrcodes release-ci" "https://crates.io/api/v1/crates/$CRATE/$VERSION" > /dev/null; then
+            echo "✅ $CRATE v$VERSION 已存在于 crates.io，跳过"
+          else
+            echo "📦 Publishing $CRATE v$VERSION..."
+            cargo publish -p "$CRATE" --registry crates-io
+          fi
 
-      # 发布 qrcode-fast，如果版本已存在则忽略
       - name: Publish qrcode-fast to crates.io
-        continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CRATE: qrcode-fast
+          VERSION: ${{ steps.versions.outputs.qrcode_fast }}
         run: |
-          echo "📦 Publishing qrcode-fast v${{ steps.versions.outputs.qrcode_fast }}..."
-          cargo publish -p qrcode-fast --token "$CARGO_REGISTRY_TOKEN" --registry crates-io 2>&1 || {
-            echo "⚠️ May already exist, continuing..."
-          }
+          if curl -sf -A "veaba/qrcodes release-ci" "https://crates.io/api/v1/crates/$CRATE/$VERSION" > /dev/null; then
+            echo "✅ $CRATE v$VERSION 已存在于 crates.io，跳过"
+          else
+            echo "📦 Publishing $CRATE v$VERSION..."
+            cargo publish -p "$CRATE" --registry crates-io
+          fi
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
