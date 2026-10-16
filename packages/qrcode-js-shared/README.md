@@ -131,17 +131,21 @@ configureCache({ maxSize: 200, enabled: true });
 
 - **TypedArray 优化**: 使用 Uint8Array 代替二维数组，内存更高效
 - **SVG Path 合并**: 减少 DOM 节点数，提升渲染性能
-- **LRU 缓存**: 内置缓存系统，重复生成性能提升 10 倍+
+- **LRU 缓存**: 内置缓存系统（`configureCache` 可配置 `maxSize` / `enabled`）
 - **TypeScript 支持**: 完整的类型定义
+- **单一实现**: `@veaba/qrcode-js`、`@veaba/qrcode-node` 等包均复用此处实现
+
+> 性能数字不在此维护。权威数据见
+> [`docs/public/benchmark_speedup_verified.json`](../../docs/public/benchmark_speedup_verified.json)。
 
 ## 注意事项
 
-这是一个**私有包**（`"private": true`），不对外发布，仅供 workspace 内部使用。
+这是一个**私有包**（`"private": true`），不对外发布到 npm，仅供 workspace 内部使用。
 
 如需在项目中使用，请安装以下公开包之一：
 
 - `@veaba/qrcode-js` - 浏览器 JavaScript 版本
-- `@veaba/qrcode-wasm` - WebAssembly 版本（性能最佳）
+- `@veaba/qrcode-wasm` - WebAssembly 版本
 - `@veaba/qrcode-node` - Node.js 版本
 - `@veaba/qrcode-bun` - Bun 运行时版本
 

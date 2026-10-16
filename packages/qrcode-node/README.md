@@ -19,7 +19,7 @@ yarn add @veaba/qrcode-node
 ## 特性
 
 - 🚀 **Node.js 优化** - 纯 JavaScript 实现，无浏览器依赖
-- 🚀 **PNG 支持** - 可生成 BMP 格式的 Buffer（无需额外依赖）
+- 🖼️ **位图输出** - `toPNGBuffer()` 返回 **BMP** 格式 Buffer（注意：函数名是历史命名，实际不是 PNG）
 - 🚀 **SVG 支持** - 生成矢量图形
 - 🚀 **高性能** - 使用 Uint8Array 优化内存
 - 🚀 **多种样式** - 内置多种流行风格
@@ -38,13 +38,13 @@ const qr = new QRCode('Hello World', QRErrorCorrectLevel.H);
 // 生成 SVG
 const svg = qr.toSVG(256);
 
-// 生成 PNG Buffer (BMP 格式)
-const pngBuffer = qr.toPNGBuffer(256);
+// 生成位图 Buffer（⚠️ 实际是 BMP，不是 PNG）
+const bmpBuffer = qr.toPNGBuffer(256);
 
 // 保存到文件
 import { writeFileSync } from 'fs';
 writeFileSync('qrcode.svg', svg);
-writeFileSync('qrcode.bmp', pngBuffer);
+writeFileSync('qrcode.bmp', bmpBuffer);   // 注意扩展名是 .bmp
 ```
 
 ### 样式生成
@@ -144,9 +144,9 @@ const gradientSvg = generateGradientQRCode(
 );
 writeFileSync(join(process.cwd(), 'qrcode-gradient.svg'), gradientSvg);
 
-// 生成 PNG
-const pngBuffer = qr.toPNGBuffer(512);
-writeFileSync(join(process.cwd(), 'qrcode.bmp'), pngBuffer);
+// 生成位图
+const bmpBuffer = qr.toPNGBuffer(512);
+writeFileSync(join(process.cwd(), 'qrcode.bmp'), bmpBuffer);
 
 console.log('QRCode 生成完成！');
 ```
@@ -169,7 +169,7 @@ new QRCode(text: string, correctLevel?: QRErrorCorrectLevel)
 | `getModuleCount()` | `number` | 获取模块数量 |
 | `toSVG(size?: number)` | `string` | 生成 SVG |
 | `toStyledSVG(options?: StyledSVGOptions)` | `string` | 生成带样式的 SVG |
-| `toPNGBuffer(size?: number)` | `Buffer` | 生成 PNG Buffer (BMP 格式) |
+| `toPNGBuffer(size?: number)` | `Buffer` | 生成位图 Buffer（**BMP 格式**，非 PNG） |
 
 ### 类型定义
 
@@ -197,17 +197,17 @@ interface StyledSVGOptions {
 
 ## 性能测试
 
-基准测试已迁移到 `bench/backend-benchmark`，运行方式：
+基准测试位于 `bench/backend-benchmark`：
 
 ```bash
 cd bench/backend-benchmark
-pnpm run bench      # 完整测试（对比所有后端包）
-pnpm run bench:fast # 快速测试
+npx tsx index.ts        # 完整测试
+npx tsx index-fast.ts   # 快速测试
 ```
 
 ## 环境要求
 
-- Node.js >= 16.0.0
+- Node.js >= 16.0.0（见 `package.json` 的 `engines`）
 
 ## License
 

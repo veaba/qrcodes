@@ -2,11 +2,18 @@
 
 浏览器兼容的 QRCode 库 - 纯 JavaScript 实现。
 
+> ℹ️ **本包现为薄封装层。** 自核心逻辑统一到 `@veaba/qrcode-js-shared` 后，
+> `src/index.ts` 只是对 shared 的 re-export，且其源码头部已标注 `@deprecated`。
+> 功能上仍完全可用，新项目建议直接使用 `@veaba/qrcode-js-shared`。
+
 ## 简介
 
 这是一个浏览器友好的 QRCode 生成库，不依赖 Node.js 特有的 API，可直接在浏览器中使用。
 
 与 `@veaba/qrcode-wasm` 提供**完全一致的 API**，方便在两个包之间无缝切换。
+
+**本包是 `@veaba/qrcode-js-shared` 的 re-export**，其全部导出（核心类、样式函数、
+缓存 API、批量/异步 API、snake_case 别名、`VERSION` / `getVersionInfo`）均来自 shared。
 
 ## 安装
 
@@ -204,34 +211,37 @@ const QRErrorCorrectLevel = {
 
 | 特性 | @veaba/qrcode-js | @veaba/qrcode-wasm |
 |------|------------------|-------------------|
-| 性能 | 快 | 更快 |
-| 包大小 | ~15KB | ~45KB |
 | 初始化 | 即时 | 需要异步初始化 |
-| 兼容性 | IE11+ | 现代浏览器 |
+| 兼容性 | 现代浏览器 | 现代浏览器 |
 | API | 统一 ✅ | 统一 ✅ |
+
+> 两者均输出 ES Module（`target: ES2020`），**不支持 IE11**。
+> `package.json` 的 `module` / `main` 指向 ESM，IE11 既不支持 ESM 也不支持 ES2020 语法。
 
 选择 `@veaba/qrcode-js`：
 
-- ✅ 需要支持 IE11 等旧浏览器
-- ✅ 对包大小敏感
 - ✅ 不想处理 WASM 的异步初始化
+- ✅ 对包体积敏感
 - ✅ 生成频率不高，性能不是瓶颈
 
 选择 `@veaba/qrcode-wasm`：
 
-- ✅ 追求极致性能
 - ✅ 高频批量生成
-- ✅ 现代浏览器环境
+- ✅ 想复用 Rust 侧同一套编码实现
 
-## 性能对比
+## 性能
 
-| 场景 | 非缓存 | 缓存 | 提升 |
-|------|--------|------|------|
-| 单条生成 | ~35,000 ops/s | ~150,000 ops/s | **4.3x** |
-| 批量 100 条 | ~3,500 ops/s | ~15,000 ops/s | **4.3x** |
-| 重复文本 | ~35,000 ops/s | ~500,000+ ops/s | **14x+** |
+本包 README **不再维护独立的性能数字**。
 
-*测试环境：Chrome 120, Intel i7-1165G7*
+历史版本曾在此列出 `ops/s` 表格，但未注明可复现的测量命令，且随实现演进已不可信。
+当前权威数据与复现方式见：
+
+- 权威数据：[`docs/public/benchmark_speedup_verified.json`](../../docs/public/benchmark_speedup_verified.json)
+- Rust 与 kennytm 的对比：`cd bench/rust-tools && cargo run --release --bin verify-speedup`
+- 前端各包互比：见 `bench/frontend-benchmark/README.md`
+
+> 另注：`@veaba/qrcode-js` 与 `@veaba/qrcode-js-shared` 是同一份实现，
+> 两者的生成耗时不存在差异，比较二者快慢没有意义。
 
 ## 开发
 

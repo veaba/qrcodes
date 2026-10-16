@@ -11,13 +11,17 @@ WebAssembly QRCode 生成器 - 基于 Rust 编译，提供优秀的 QRCode 生�
 ## 特性
 
 - ⚡ **高性能** - Rust + WASM 提供接近原生的执行速度
-- ⚡ **并行计算** - 支持多线程并行生成（需配置）
 - 💾 **可选缓存** - LRU 缓存支持，重复文本性能提升 10 倍+
 - 🎨 **丰富样式** - 支持 10+ 种个性样式
 - 📦 **批量生成** - 支持批量异步生成
 - 🖼️ **SVG 输出** - 生成矢量图形，清晰锐利
 - 🔧 **TypeScript 支持** - 包含类型定义文件
 - 🔄 **API 统一** - 与 `@veaba/qrcode-js` 完全一致的 API
+
+> ⚠️ **关于并行**：Cargo 中 `parallel` feature 默认**未启用**
+> （`default = ['console_error_panic_hook']`），且构建脚本未传入该 feature。
+> 常规构建产物不含多线程能力。`init_thread_pool` / `is_parallel_supported`
+> 仅在以 `--features parallel` 自行构建后才可用。
 
 ## 安装
 
@@ -42,7 +46,7 @@ yarn add @veaba/qrcode-wasm
 ### 基础用法（统一 API）
 
 ```typescript
-import initWasm, { QRCodeCore, QRErrorCorrectLevel } from '@veaba/qrcode-wasm';
+import { initWasm, QRCodeCore, QRErrorCorrectLevel } from '@veaba/qrcode-wasm';
 
 // 初始化 WASM（自动检测 Vite/Webpack/Parcel 环境）
 await initWasm();
@@ -60,7 +64,8 @@ document.getElementById('qrcode').innerHTML = svg;
 ### 使用缓存（推荐）
 
 ```typescript
-import initWasm, { 
+import {
+  initWasm,
   generateRoundedQRCodeCached,
   clearQRCodeCache,
   getCacheStats 
@@ -84,7 +89,8 @@ clearQRCodeCache();
 ### 样式化二维码
 
 ```typescript
-import initWasm, { 
+import {
+  initWasm,
   generateWechatStyleQRCode,
   generateDouyinStyleQRCode,
   generateCyberpunkStyleQRCode 
@@ -105,7 +111,7 @@ const cyberQR = generateCyberpunkStyleQRCode('https://example.com', 256);
 ### 批量生成
 
 ```typescript
-import initWasm, { generateBatchQRCodes, generateBatchQRCodesCached } from '@veaba/qrcode-wasm';
+import { initWasm, generateBatchQRCodes, generateBatchQRCodesCached } from '@veaba/qrcode-wasm';
 
 await initWasm();
 
@@ -125,7 +131,7 @@ const svgsCached = generateBatchQRCodesCached(texts, { size: 256 });
 ### 异步生成
 
 ```typescript
-import initWasm, { generateQRCodeAsync, generateBatchAsync } from '@veaba/qrcode-wasm';
+import { initWasm, generateQRCodeAsync, generateBatchAsync } from '@veaba/qrcode-wasm';
 
 await initWasm();
 
@@ -145,23 +151,10 @@ const results = await generateBatchAsync(texts, {
 
 ## 底层 WASM API（可选）
 
-如果需要更底层的控制，可以直接使用 WASM 原生 API：
+如果需要更底层的控制，可使用 `QRCodeGenerator`：
 
 ```typescript
-import initWasm, { QRCodeWasm, CorrectLevel } from '@veaba/qrcode-wasm';
-
-await initWasm();
-
-// 使用底层 WASM API
-const qr = new QRCodeWasm();
-qr.make_code('https://github.com/veaba/qrcodes');
-const svg = qr.get_svg();
-```
-
-### 使用 QRCodeGenerator（可复用实例）
-
-```typescript
-import initWasm, { QRCodeGenerator, CorrectLevel } from '@veaba/qrcode-wasm';
+import { initWasm, QRCodeGenerator, CorrectLevel } from '@veaba/qrcode-wasm';
 
 await initWasm();
 
@@ -178,31 +171,12 @@ const svg1 = gen.get_svg();
 // 复用同一实例生成另一个（性能更好）
 gen.generate('https://github.com/veaba/qrcodes/2');
 const svg2 = gen.get_svg();
-
-// 批量生成
-const texts = ['url1', 'url2', 'url3'];
-const svgs = gen.generate_batch(texts);
 ```
 
-### Canvas 渲染
-
-```typescript
-import initWasm, { CanvasRenderer } from '@veaba/qrcode-wasm';
-
-await initWasm();
-
-// 创建 Canvas 渲染器
-const renderer = new CanvasRenderer(256, 256);
-
-// 设置颜色（RGBA）
-renderer.set_colors(
-  0, 0, 0, 255,      // 深色: 黑色
-  255, 255, 255, 255 // 浅色: 白色
-);
-
-// 渲染 QRCode
-const pixelData = renderer.render('https://github.com/veaba/qrcodes', CorrectLevel.H);
-```
+> **说明**：`QRCodeGenerator` 是 `index.ts` 中唯一对外导出的底层生成器。
+> Rust 侧的 `QRCodeWasm` 与 `CanvasRenderer` **未从 TypeScript 入口 re-export**，
+> 因此无法从 `@veaba/qrcode-wasm` 直接 import。
+> 需要这两者请直接使用 `pkg/` 下的 wasm 产物，或自行扩展 `src/index.ts` 的导出。
 
 ## API
 
@@ -237,33 +211,29 @@ const pixelData = renderer.render('https://github.com/veaba/qrcodes', CorrectLev
 
 | 特性 | @veaba/qrcode-wasm | @veaba/qrcode-js |
 |------|-------------------|------------------|
-| 性能 | ⚡⚡⚡ 最快 | ⚡⚡ 快 |
-| 包大小 | ~45KB | ~15KB |
 | 初始化 | 需要异步 | 即时 |
-| 兼容性 | 现代浏览器 | IE11+ |
+| 兼容性 | 现代浏览器 | 现代浏览器 |
 | API | 统一 ✅ | 统一 ✅ |
 
 选择 `@veaba/qrcode-wasm`：
 
-- ✅ 追求极致性能
 - ✅ 高频批量生成
+- ✅ 希望与 Rust 侧共用同一套编码实现
 - ✅ 现代浏览器环境
 
 选择 `@veaba/qrcode-js`：
 
-- ✅ 需要支持 IE11 等旧浏览器
-- ✅ 对包大小敏感
 - ✅ 不想处理 WASM 的异步初始化
+- ✅ 对包体积敏感
 
-## 性能对比
+## 性能
 
-| 场景 | @veaba/qrcode-js | @veaba/qrcode-wasm | 提升 |
-|------|------------------|-------------------|------|
-| 单条生成 | ~9,000 ops/s | ~15,000 ops/s | **1.7x** |
-| SVG 输出 | ~9,800 ops/s | ~17,000 ops/s | **1.7x** |
-| 缓存命中 | ~500,000 ops/s | ~500,000 ops/s | 相同 |
+本 README **不再维护独立的性能数字**。历史版本曾列出 `ops/s` 对比表，
+但未注明可复现命令，已随实现演进失效。
 
-*测试环境：Chrome 120, Intel i7-1165G7*
+- 权威数据：[`docs/public/benchmark_speedup_verified.json`](../../docs/public/benchmark_speedup_verified.json)
+- Rust 侧复现：`cd bench/rust-tools && cargo run --release --bin verify-speedup`
+- 前端各包互比：见 `bench/frontend-benchmark/README.md`
 
 ## 开发
 
