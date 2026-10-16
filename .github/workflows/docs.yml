@@ -71,10 +71,9 @@ jobs:
           path: doc_build
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: qrcodes-docs
-          directory: doc_build
+          command: pages deploy doc_build --project-name=qrcodes-docs
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
