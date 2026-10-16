@@ -1,6 +1,6 @@
 {
   "name": "@veaba/qrcode-fast",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "High-performance Rust QRCode generator - Rust crate only",
   "private": true,
   "files": [

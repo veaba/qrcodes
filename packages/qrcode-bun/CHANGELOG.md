@@ -1,5 +1,12 @@
 # @veaba/qrcode-bun
 
+## 0.3.0
+
+### Minor Changes
+
+- 57643d3: release: v0.3.0
+  - feat: improve benchmark criteria and fix QR code rendering errors across versions
+
 ## 0.2.0
 
 ### Minor Changes
