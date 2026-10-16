@@ -53,19 +53,35 @@ function syncVersion(pkgDir) {
 
   const oldVersion = versionMatch[1];
 
-  if (oldVersion === newVersion) {
-    return { pkg: pkgDir, version: newVersion, changed: false };
-  }
-
   // 更新 Cargo.toml 中的版本号
-  const updatedCargoToml = cargoToml.replace(
+  let updatedCargoToml = cargoToml.replace(
     /^version\s*=\s*"[^"]+"/m,
     `version = "${newVersion}"`
   );
 
+  // 同步 workspace 内 crate 的依赖版本声明。
+  // 仅改自身 version 是不够的：`qrcode-rust-shared = { path = "...", version = "0.1.3" }`
+  // 在 cargo 里等价于 `^0.1.3`，当 qrcode-rust-shared 自身升到 0.3.0 后约束无法满足，
+  // 会让 `cargo metadata`（进而 wasm-pack / pnpm install 的 prepare 脚本）失败。
+  const depVersions = [];
+  updatedCargoToml = updatedCargoToml.replace(
+    /^(\s*)([a-z0-9-]+)(\s*=\s*\{[^}]*?version\s*=\s*")([^"]+)(")/gm,
+    (match, indent, depName, prefix, depVersion, suffix) => {
+      // 只同步本 workspace 内的 rust crate，避免动第三方依赖的版本约束
+      if (!rustPackages.includes(depName)) return match;
+      if (depVersion === newVersion) return match;
+      depVersions.push(`${depName}: ${depVersion} → ${newVersion}`);
+      return `${indent}${depName}${prefix}${newVersion}${suffix}`;
+    }
+  );
+
+  if (oldVersion === newVersion && depVersions.length === 0) {
+    return { pkg: pkgDir, version: newVersion, changed: false };
+  }
+
   fs.writeFileSync(cargoTomlPath, updatedCargoToml);
 
-  return { pkg: pkgDir, oldVersion, newVersion, changed: true };
+  return { pkg: pkgDir, oldVersion, newVersion, depVersions, changed: true };
 }
 
 function main() {
@@ -81,6 +97,9 @@ function main() {
 
     if (result.changed) {
       log(`  ✅ ${pkg}: ${result.oldVersion} → ${result.newVersion}`, 'green');
+      for (const dep of result.depVersions) {
+        log(`     ↳ 依赖 ${dep}`, 'green');
+      }
       hasChanges = true;
     } else {
       log(`  ℹ️  ${pkg}: ${result.version} (已是最新)`, 'yellow');
